@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Daily OS · Work · Train · Eat</title>
+<!-- iOS / home-screen web app -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Daily OS">
+<meta name="theme-color" content="#F4F1E8">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F4F1E8;
+    --surface:#FCFBF6;
+    --ink:#1E2820;
+    --muted:#6E746A;
+    --line:#E4DFD1;
+    --herb:#2F5D3A;
+    --herb-soft:#E9F0E6;
+    --turmeric:#D69A1C;
+    --turmeric-soft:#FBEFD6;
+    --chilli:#B14622;
+    --chilli-soft:#F6E7DF;
+    --slate:#3A4D6E;
+    --slate-soft:#E6EAF1;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:calc(72px + env(safe-area-inset-bottom));
+  }
+  .wrap{max-width:820px;margin:0 auto;padding:0 18px}
+  a{color:inherit;text-decoration:none}
+
+  /* nav */
+  .nav{position:sticky;top:0;z-index:60;background:rgba(244,241,232,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .nav-inner{max-width:820px;margin:0 auto;padding:11px 18px;display:flex;align-items:center;gap:14px}
+  .nav-brand{font-family:'Bricolage Grotesque';font-weight:800;font-size:15px;letter-spacing:-.01em;white-space:nowrap}
+  .nav-brand span{color:var(--herb)}
+  .nav-links{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+  .nav-links a{font-size:13px;font-weight:600;padding:6px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--muted);transition:.15s}
+  .nav-links a:hover{color:var(--herb);border-color:var(--herb)}
+
+  /* hero */
+  .hero{padding:42px 0 10px}
+  .eyebrow{font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--herb);margin-bottom:14px}
+  .hero h1{font-family:'Bricolage Grotesque';font-weight:800;font-size:clamp(34px,8vw,56px);line-height:.98;letter-spacing:-.025em}
+  .hero h1 em{font-style:normal;color:var(--turmeric)}
+  .hero p{margin-top:16px;font-size:15.5px;color:var(--muted);max-width:56ch}
+
+  /* day selector */
+  .daybar{margin-top:26px}
+  .daybar-lab{font-size:12.5px;color:var(--muted);margin-bottom:9px;font-weight:600;letter-spacing:.02em}
+  .day-pills{display:flex;flex-wrap:wrap;gap:8px}
+  .day-pills button{
+    font-family:'Bricolage Grotesque';font-weight:600;font-size:14px;
+    padding:9px 16px;border-radius:12px;cursor:pointer;
+    border:1px solid var(--line);background:var(--surface);color:var(--muted);transition:.15s;
+  }
+  .day-pills button .tag-mini{display:block;font-family:'Inter';font-size:10.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-top:1px;opacity:.7}
+  .day-pills button.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+  .day-pills button.on .tag-mini{opacity:.85}
+
+  /* section heads */
+  .sec{padding:38px 0 4px}
+  .sec-head{display:flex;align-items:baseline;gap:14px}
+  .sec-head h2{font-family:'Bricolage Grotesque';font-weight:800;font-size:clamp(24px,5vw,32px);letter-spacing:-.02em}
+  .sec-head .ln{flex:1;height:1px;background:var(--line)}
+  .sec-sub{font-size:13.5px;color:var(--muted);margin-top:8px;max-width:60ch}
+
+  /* ---- timeline / day spine ---- */
+  .spine{position:relative;margin-top:22px;padding-left:74px}
+  .spine::before{content:"";position:absolute;left:60px;top:6px;bottom:6px;width:2px;background:var(--line)}
+  .now-line{position:absolute;left:46px;right:0;height:2px;background:var(--chilli);z-index:5;display:none}
+  .now-line::before{content:"";position:absolute;left:0;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--chilli)}
+  .now-line .now-tag{position:absolute;left:14px;top:-9px;font-family:'JetBrains Mono';font-size:10px;font-weight:700;color:var(--chilli);background:var(--paper);padding:0 5px}
+
+  .block{position:relative;margin-bottom:12px}
+  .block .t{position:absolute;left:-74px;top:2px;width:54px;text-align:right;font-family:'JetBrains Mono';font-size:12px;font-weight:700;color:var(--muted)}
+  .block::before{content:"";position:absolute;left:-20px;top:6px;width:11px;height:11px;border-radius:50%;background:var(--surface);border:2px solid var(--line)}
+  .block.k-focus::before{border-color:var(--turmeric);background:var(--turmeric)}
+  .block.k-workout::before{border-color:var(--chilli);background:var(--chilli)}
+  .block.k-meal::before{border-color:var(--herb);background:var(--herb)}
+  .block.k-personal::before{border-color:var(--muted)}
+  .card{
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:13px 15px;
+    transition:.15s;
+  }
+  .card .ctop{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .card .name{font-family:'Bricolage Grotesque';font-weight:600;font-size:15.5px;letter-spacing:-.01em}
+  .card .detail{font-size:13.5px;color:var(--muted);margin-top:4px}
+  .card .detail a{color:var(--herb);font-weight:600;border-bottom:1px solid var(--herb-soft)}
+  .pill{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:3px 9px;border-radius:999px}
+  .pill.focus{background:var(--turmeric-soft);color:#8a610c}
+  .pill.workout{background:var(--chilli-soft);color:var(--chilli)}
+  .pill.meal{background:var(--herb-soft);color:var(--herb)}
+  .pill.personal{background:#EDEAE0;color:var(--muted)}
+  .pill.work{background:var(--slate-soft);color:var(--slate)}
+  .pill.flex{background:#efe8da;color:#8a6d2a}
+
+  /* meeting chips inside a block */
+  .mtg-list{margin-top:9px;display:flex;flex-direction:column;gap:6px}
+  .mtg-chip{display:flex;align-items:center;gap:8px;background:var(--slate-soft);border-left:3px solid var(--slate);border-radius:8px;padding:7px 10px;font-size:13px}
+  .mtg-chip .mt-time{font-family:'JetBrains Mono';font-size:11.5px;font-weight:700;color:var(--slate)}
+  .mtg-chip .mt-name{font-weight:600}
+  .mtg-chip .mt-rec{font-size:10.5px;color:var(--muted);margin-left:auto}
+  .warn{margin-top:8px;font-size:12.5px;color:var(--chilli);background:var(--chilli-soft);border-radius:8px;padding:7px 10px;font-weight:500}
+  .warn b{font-weight:700}
+  .flex-resolved{font-size:12.5px;font-weight:600;margin-top:6px}
+  .flex-resolved.focus{color:#8a610c}
+  .flex-resolved.busy{color:var(--slate)}
+
+  /* protein tally */
+  .tally{margin-top:18px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+  .tally-top{display:flex;justify-content:space-between;align-items:baseline}
+  .tally-top .g{font-family:'Bricolage Grotesque';font-weight:800;font-size:22px;letter-spacing:-.02em}
+  .tally-top .g small{font-size:13px;font-weight:600;color:var(--muted);margin-left:2px}
+  .tally-top .lab{font-size:12.5px;color:var(--muted)}
+  .tally-bar{height:8px;border-radius:999px;background:var(--line);margin-top:10px;overflow:hidden}
+  .tally-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--herb),var(--turmeric));border-radius:999px;transition:width .4s}
+
+  /* meals grid */
+  .meal-grid{margin-top:20px;display:grid;gap:12px}
+  .meal-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+  .meal-card .when{font-family:'JetBrains Mono';font-size:11px;font-weight:700;color:var(--herb);letter-spacing:.04em;text-transform:uppercase}
+  .meal-card .mname{font-family:'Bricolage Grotesque';font-weight:600;font-size:16px;margin-top:4px;display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+  .meal-card .pg{font-family:'JetBrains Mono';font-size:12px;font-weight:700;color:var(--turmeric);white-space:nowrap}
+  .meal-card .mitems{font-size:13.5px;color:var(--muted);margin-top:6px}
+  .meal-card .mprep{font-size:13px;color:var(--ink);margin-top:8px;padding-top:8px;border-top:1px dashed var(--line)}
+  .meal-card .mprep b{color:var(--herb)}
+
+  /* training */
+  .train-card{margin-top:20px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 18px 6px;border-top:3px solid var(--chilli)}
+  .train-card.rest{border-top-color:var(--herb)}
+  .train-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .train-head h3{font-family:'Bricolage Grotesque';font-weight:800;font-size:20px;letter-spacing:-.01em}
+  .train-focus{font-size:13px;color:var(--muted);margin-top:6px;margin-bottom:6px}
+  .tblock{margin:14px 0 4px}
+  .tblock-lab{font-family:'JetBrains Mono';font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--chilli);margin-bottom:8px}
+  .train-card.rest .tblock-lab{color:var(--herb)}
+  .ex{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .ex:last-child{border-bottom:none}
+  .ex .exn{font-weight:600}
+  .ex .exn small{display:block;font-weight:400;font-size:12px;color:var(--muted);margin-top:2px}
+  .ex .exr{font-family:'JetBrains Mono';font-size:12.5px;font-weight:700;color:var(--ink);white-space:nowrap;text-align:right}
+  .tnote{font-size:12.5px;color:var(--muted);margin:10px 0 4px;padding:10px 12px;background:var(--paper);border-radius:10px}
+
+  /* meeting manager */
+  .form-card{margin-top:20px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px}
+  .frow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .field{flex:1;min-width:130px}
+  .field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px}
+  .field input,.field select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);font:inherit;font-size:14px;color:var(--ink)}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--herb)}
+  .seg{display:flex;gap:6px}
+  .seg button{flex:1;padding:9px;border:1px solid var(--line);background:var(--paper);border-radius:10px;font:inherit;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
+  .seg button.on{background:var(--slate);color:#fff;border-color:var(--slate)}
+  .weekdays{display:flex;gap:5px;flex-wrap:wrap}
+  .weekdays button{padding:8px 0;width:44px;border:1px solid var(--line);background:var(--paper);border-radius:9px;font:inherit;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer}
+  .weekdays button.on{background:var(--herb);color:#fff;border-color:var(--herb)}
+  .quickdays{display:flex;gap:6px;margin-top:8px}
+  .quickdays button{font-size:11.5px;padding:5px 10px;border:1px solid var(--line);background:var(--paper);border-radius:999px;color:var(--muted);cursor:pointer;font-weight:600}
+  .btn{font-family:'Inter';font-weight:600;font-size:14px;padding:11px 20px;border-radius:11px;border:1px solid var(--ink);background:var(--ink);color:var(--surface);cursor:pointer;transition:.15s}
+  .btn:hover{opacity:.9}
+  .btn.ghost{background:var(--surface);color:var(--ink)}
+  .btn-row{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:4px}
+
+  .mlist{margin-top:18px;display:flex;flex-direction:column;gap:8px}
+  .mlist-empty{font-size:13.5px;color:var(--muted);text-align:center;padding:22px;background:var(--surface);border:1px dashed var(--line);border-radius:14px}
+  .mrow{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 14px}
+  .mrow .mr-time{font-family:'JetBrains Mono';font-size:13px;font-weight:700;color:var(--slate);white-space:nowrap}
+  .mrow .mr-body{flex:1;min-width:0}
+  .mrow .mr-name{font-weight:600;font-size:14.5px}
+  .mrow .mr-meta{font-size:12px;color:var(--muted);margin-top:1px}
+  .mrow .mr-x{border:none;background:none;color:var(--muted);font-size:20px;line-height:1;cursor:pointer;padding:2px 6px;border-radius:8px}
+  .mrow .mr-x:hover{background:var(--chilli-soft);color:var(--chilli)}
+
+  .io-row{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap}
+  .io-row .btn{font-size:13px;padding:9px 16px}
+
+  footer{margin-top:50px;padding:24px 0;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);text-align:center}
+
+  @media (max-width:520px){
+    .spine{padding-left:60px}
+    .spine::before{left:48px}
+    .block .t{left:-60px;width:42px;font-size:11px}
+    .field{min-width:110px}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<nav class="nav"><div class="nav-inner">
+  <div class="nav-brand">Daily <span>OS</span></div>
+  <div class="nav-links">
+    <a href="#schedule">Schedule</a>
+    <a href="#meetings">Meetings</a>
+    <a href="#meals">Meals</a>
+    <a href="#training">Training</a>
+  </div>
+</div></nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <div class="eyebrow">Work · Train · Eat</div>
+    <h1>Your day, <em>blocked</em> and<br>built to bend around meetings.</h1>
+    <p>An 11–8 workday with two protected focus windows, a morning lift, and protein anchored across four meals. Set your meetings below and the day reshapes itself — the flex block fills with deep work whenever your calendar is clear.</p>
+
+    <div class="daybar">
+      <div class="daybar-lab">Pick today's rotation day — it drives your meals and your workout</div>
+      <div class="day-pills" id="dayPills"></div>
+    </div>
+  </header>
+
+  <!-- SCHEDULE -->
+  <section class="sec" id="schedule">
+    <div class="sec-head"><h2>The day</h2><div class="ln"></div></div>
+    <div class="sec-sub">Live timeline. The red marker tracks the current time. Meetings you've set for today drop into their slots, and any clash with a focus block gets flagged.</div>
+    <div class="spine" id="spine"></div>
+  </section>
+
+  <!-- MEETINGS -->
+  <section class="sec" id="meetings">
+    <div class="sec-head"><h2>Meetings</h2><div class="ln"></div></div>
+    <div class="sec-sub">Add a one-off meeting on a date, or a recurring one on chosen weekdays. Saved to this browser so they persist between visits.</div>
+
+    <div class="form-card">
+      <div class="frow">
+        <div class="field" style="flex:2;min-width:180px">
+          <label>Meeting name</label>
+          <input type="text" id="m-name" placeholder="e.g. Revenue sync, 1:1 with manager">
+        </div>
+      </div>
+      <div class="frow">
+        <div class="field"><label>Start time</label><input type="time" id="m-time" value="11:30"></div>
+        <div class="field"><label>Duration (min)</label><input type="number" id="m-dur" value="30" min="5" step="5"></div>
+      </div>
+      <div class="frow">
+        <div class="field">
+          <label>Type</label>
+          <div class="seg">
+            <button id="seg-once" class="on" data-mode="once">One-off</button>
+            <button id="seg-rec" data-mode="recurring">Recurring</button>
+          </div>
+        </div>
+      </div>
+      <div class="frow" id="once-wrap">
+        <div class="field"><label>Date</label><input type="date" id="m-date"></div>
+      </div>
+      <div class="frow" id="rec-wrap" style="display:none">
+        <div class="field">
+          <label>Repeats on</label>
+          <div class="weekdays" id="weekdays"></div>
+          <div class="quickdays">
+            <button data-q="weekdays">Mon–Fri</button>
+            <button data-q="all">Every day</button>
+            <button data-q="clear">Clear</button>
+          </div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="m-add">Add meeting</button>
+        <span id="m-msg" style="font-size:13px;color:var(--herb);font-weight:600"></span>
+      </div>
+    </div>
+
+    <div class="mlist" id="mlist"></div>
+
+    <div class="io-row">
+      <button class="btn ghost" id="m-export">Export meetings</button>
+      <button class="btn ghost" id="m-import">Import</button>
+      <input type="file" id="m-file" accept="application/json" style="display:none">
+    </div>
+  </section>
+
+  <!-- MEALS -->
+  <section class="sec" id="meals">
+    <div class="sec-head"><h2>What to eat</h2><div class="ln"></div></div>
+    <div class="sec-sub">High-protein Indian rotation for a calorie deficit. Four meals, sunrise to night, with prep cues. Chicken anchors Days 1, 3 &amp; 5.</div>
+    <div class="tally">
+      <div class="tally-top"><div class="g" id="tally-g">—<small> g protein</small></div><div class="lab">vs ~135 g ceiling</div></div>
+      <div class="tally-bar"><i id="tally-bar" style="width:0%"></i></div>
+    </div>
+    <div class="meal-grid" id="mealGrid"></div>
+  </section>
+
+  <!-- TRAINING -->
+  <section class="sec" id="training">
+    <div class="sec-head"><h2>What to train</h2><div class="ln"></div></div>
+    <div class="sec-sub">Home only, dumbbells + bodyweight. A 6-day split that retains muscle in a deficit. Day 4 is active recovery — it lines up with your lightest food day.</div>
+    <div id="trainCard"></div>
+  </section>
+
+  <footer>
+    Daily OS · self-contained file · everything saves to this browser only.<br>
+    Built around an 11–8 day with two protected focus windows. Open this file any time to plan tomorrow.
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var $=function(id){return document.getElementById(id);};
+  var KEY='daily_os_meetings_v1';
+  var DAYKEY='daily_os_day_v1';
+
+  /* ---------------- DATA: MEALS (6-day rotation) ---------------- */
+  var MEALS={
+    1:{tag:"Chicken",protein:115,meals:[
+      {when:"Breakfast · before 9",name:"Egg bhurji (3 eggs) + 1 multigrain roti",pg:"~24 g",items:"Onion, tomato, green chilli, turmeric, coriander.",prep:"Scramble on low heat just until set — don't overcook. Drop a yolk or two to cut calories."},
+      {when:"Lunch tiffin · 1:30",name:"Grilled chicken tikka (150 g, dry) + 2 jowar roti",pg:"~44 g",items:"Hung-curd marinade, ginger-garlic, garam masala, lemon.",prep:"Marinate 30 min+ (overnight best). Air-fry/grill/pan-sear ~15 min. Dry tikka reheats without going rubbery — best dabba format."},
+      {when:"Eve snack · 4",name:"Roasted chana (40 g) + 10 almonds + green tea",pg:"~11 g",items:"",prep:"Keep it dry and portioned — measure the chana, don't pour."},
+      {when:"Dinner · 9",name:"Chicken sukha (120 g) + 1 jowar roti + methi sabzi",pg:"~36 g",items:"Curry leaves, dry spices, 1 tsp oil.",prep:"Cook covered on low — chicken releases its own moisture, no water needed. Uncover and cook off the liquid till dry and coated."}
+    ]},
+    2:{tag:"Vegetarian",protein:92,meals:[
+      {when:"Breakfast · before 9",name:"Moong dal cheela + paneer (60 g) + 1 boiled egg",pg:"~30 g",items:"Soaked moong batter, paneer-onion stuffing, green chutney.",prep:"Spread batter thin on a hot tawa, fold the stuffing in, golden both sides. Make 2."},
+      {when:"Lunch tiffin · 1:30",name:"Kala chana taco wrap (veg) + paneer (60 g)",pg:"~28 g",items:"Jowar roti wrap, spiced chana, onion, chutney.",prep:"Keep the chana dry, not gravy. Roll tight, wrap in foil — holds 4–5 hrs."},
+      {when:"Eve snack · 4",name:"Spiced buttermilk + roasted chana (30 g)",pg:"~10 g",items:"Jeera, black salt, mint.",prep:"Thin chaas, no sugar."},
+      {when:"Dinner · 9",name:"Tofu stir-fry (200 g) + veg + 1 ragi roti + salad",pg:"~24 g",items:"Capsicum, beans, soy-garlic toss.",prep:"High heat, ≤1 tsp oil. Press the tofu first so it browns instead of steaming."}
+    ]},
+    3:{tag:"Chicken",protein:101,meals:[
+      {when:"Breakfast · before 9",name:"Sattu drink + 2 boiled eggs + 1 small banana",pg:"~22 g",items:"Roasted chana sattu, lemon, jeera, black salt.",prep:"Whisk sattu into a little water first to kill lumps. Keep it savoury — no sugar."},
+      {when:"Lunch tiffin · 1:30",name:"Curd rice + poached chicken (120 g) + roasted papad",pg:"~38 g",items:"Cooled rice, curd, mustard-curry-leaf temper.",prep:"Poach chicken in salted water + bay leaf 12–15 min, shred. Mix curd into cooled rice for a creamy texture. Serve cool."},
+      {when:"Eve snack · 4",name:"Greek yogurt bowl + flaxseeds + pomegranate",pg:"~15 g",items:"",prep:"Unsweetened yogurt. Flax for fibre + omega-3."},
+      {when:"Dinner · 9",name:"Paneer bhurji (120 g) + 1 jowar roti + salad",pg:"~26 g",items:"Onion, tomato, dry spices, coriander.",prep:"Crumble paneer in at the end and toss — don't let it harden."}
+    ]},
+    4:{tag:"Veg · light · rest",protein:84,meals:[
+      {when:"Breakfast · before 9",name:"Egg white omelette (4 whites + 1 egg) + 1 multigrain roti",pg:"~24 g",items:"Onion, tomato, spinach, green chilli.",prep:"Cook on low, fold once the base sets."},
+      {when:"Lunch tiffin · 1:30",name:"Paneer tikka (150 g, dry) + 2 ragi roti",pg:"~36 g",items:"Hung curd, capsicum + onion chunks, garam masala.",prep:"Grill/air-fry ~10 min till edges char. Don't overcook — paneer turns chewy."},
+      {when:"Eve snack · 4",name:"Roasted chana (40 g) + amla juice + green tea",pg:"~9 g",items:"",prep:"Light day — keep the snack tight."},
+      {when:"Dinner · 9",name:"Moong dal + brown rice (½ katori) + methi sabzi",pg:"~15 g",items:"",prep:"Rest day, so dinner is lighter. Top up with 1 egg or 100 g curd only if genuinely hungry."}
+    ]},
+    5:{tag:"Chicken",protein:97,meals:[
+      {when:"Breakfast · before 9",name:"Idli (3) + sambar + coconut chutney + 2 boiled eggs",pg:"~22 g",items:"Fermented batter, toor-dal sambar, chana-dal chutney.",prep:"Store-bought batter saves time. The 2 eggs carry the protein."},
+      {when:"Lunch tiffin · 1:30",name:"Kala chana taco wrap + chicken (120 g)",pg:"~42 g",items:"Same wrap as Day 2 — swap paneer for shredded chicken.",prep:"Shred poached chicken into the dry chana before rolling."},
+      {when:"Eve snack · 4",name:"Masala makhana + pumpkin seeds + 1 fruit",pg:"~9 g",items:"",prep:"Dry-roast makhana in ½ tsp ghee till crisp."},
+      {when:"Dinner · 9",name:"Tofu stir-fry (200 g) + veg + 1 ragi roti + salad",pg:"~24 g",items:"",prep:"Press, brown hard, toss with veg. ≤1 tsp oil."}
+    ]},
+    6:{tag:"Vegetarian",protein:95,meals:[
+      {when:"Breakfast · before 9",name:"Moong dal cheela + paneer (60 g)",pg:"~22 g",items:"Soaked moong batter, paneer stuffing, chutney.",prep:"Thin spread, fold, golden both sides."},
+      {when:"Lunch tiffin · 1:30",name:"Curd rice + 150 g paneer (veg) + roasted papad",pg:"~34 g",items:"Veg day — use paneer or extra dal instead of chicken; ½ tsp pickle.",prep:"Same curd-rice base as Day 3, paneer in place of chicken."},
+      {when:"Eve snack · 4",name:"Spiced buttermilk + roasted chana (30 g)",pg:"~10 g",items:"",prep:"No sugar; jeera + black salt."},
+      {when:"Dinner · 9",name:"Soya chunk curry (50 g dry) + 1 jowar roti + salad",pg:"~29 g",items:"Onion-tomato base, dry-ish gravy.",prep:"Boil soya, squeeze dry, then simmer in the masala so it soaks flavour."}
+    ]}
+  };
+
+  /* ---------------- DATA: TRAINING (6-day, home + dumbbells) ---------------- */
+  var TRAIN={
+    1:{title:"Upper · Push",rest:false,focus:"Chest, shoulders, triceps. Pairs with a high-protein chicken day.",
+      sections:[
+        {lab:"Warm-up · 5 min",ex:[
+          {n:"Arm circles + band/towel pull-aparts",r:"2 min"},
+          {n:"Scapular push-ups",r:"15"},
+          {n:"Jumping jacks",r:"30"}]},
+        {lab:"Main lifts · rest 60–75s",ex:[
+          {n:"DB floor press",s:"Lie on the floor, press from chest.",r:"4 × 8–10"},
+          {n:"DB standing shoulder press",r:"3 × 10"},
+          {n:"DB incline press",s:"Prop torso on a couch/step for the angle.",r:"3 × 10"},
+          {n:"DB lateral raise",s:"Light weight, controlled.",r:"3 × 12–15"},
+          {n:"DB overhead triceps extension",r:"3 × 12"},
+          {n:"Push-ups",s:"As many clean reps as possible.",r:"2 × AMRAP"}]},
+        {lab:"Finisher · 3 rounds",ex:[
+          {n:"Push-ups 30s / shoulder taps 30s / rest 30s",r:"3 rounds"}]}
+      ],note:"Cooldown: doorway chest stretch + overhead triceps stretch, 5 min. Leave 1–2 reps in the tank on the main lifts."},
+    2:{title:"Lower Body",rest:false,focus:"Quads, glutes, hamstrings. Biggest calorie-burn day of the week.",
+      sections:[
+        {lab:"Warm-up · 5 min",ex:[
+          {n:"Bodyweight squats",r:"20"},
+          {n:"Leg swings + walking lunges",r:"2 min"},
+          {n:"Glute bridges",r:"15"}]},
+        {lab:"Main lifts · rest 75–90s",ex:[
+          {n:"DB goblet squat",s:"Hold one DB at the chest, sit deep.",r:"4 × 10–12"},
+          {n:"DB Romanian deadlift",s:"Hinge at hips, soft knees, feel the hamstrings.",r:"4 × 10"},
+          {n:"DB reverse lunge",r:"3 × 10 / leg"},
+          {n:"DB Bulgarian split squat",s:"Rear foot on a couch/chair.",r:"3 × 8 / leg"},
+          {n:"DB calf raise",r:"3 × 15–20"},
+          {n:"Weighted glute bridge",s:"DB across the hips.",r:"3 × 15"}]},
+        {lab:"Finisher",ex:[
+          {n:"Bodyweight squats for time",r:"100 reps"}]}
+      ],note:"Cooldown: hip-flexor stretch, hamstring stretch, pigeon pose. Expect soreness 24–48h — Day 4 recovery handles it."},
+    3:{title:"Upper · Pull + Core",rest:false,focus:"Back, biceps, abs. Balances the Day 1 push work.",
+      sections:[
+        {lab:"Warm-up · 5 min",ex:[
+          {n:"Band/towel rows",r:"2 min"},
+          {n:"Cat-cow + dead bugs",r:"10 each"}]},
+        {lab:"Main lifts · rest 60–75s",ex:[
+          {n:"DB bent-over row",s:"Flat back, pull to the hips.",r:"4 × 10"},
+          {n:"DB single-arm row",s:"Brace on a chair.",r:"3 × 10 / arm"},
+          {n:"DB reverse fly",s:"Hinge forward, squeeze shoulder blades.",r:"3 × 12–15"},
+          {n:"DB bicep curl",r:"3 × 12"},
+          {n:"DB hammer curl",r:"3 × 12"},
+          {n:"Renegade row",s:"Plank position on the DBs, row one side.",r:"3 × 8 / side"}]},
+        {lab:"Core circuit · 3 rounds",ex:[
+          {n:"Plank 45s / DB Russian twist 20 / hollow hold 30s / leg raises 12",r:"3 rounds"}]}
+      ],note:"Cooldown: lat stretch, child's pose, seated spinal twist."},
+    4:{title:"Active Recovery",rest:true,focus:"No dumbbells. Keep the heart rate low — this is recovery, not a workout. Lines up with the lightest food day.",
+      sections:[
+        {lab:"Move · ~30–40 min",ex:[
+          {n:"Brisk walk",s:"Outdoors or in place.",r:"8–10k steps"}]},
+        {lab:"Mobility flow · 10 min",ex:[
+          {n:"World's greatest stretch",r:"5 / side"},
+          {n:"Hip openers (90/90)",r:"2 min"},
+          {n:"Thoracic rotations",r:"10 / side"},
+          {n:"Towel shoulder dislocates",r:"15"}]},
+        {lab:"Optional",ex:[
+          {n:"Light yoga or foam roll",r:"10 min"}]}
+      ],note:"If you feel beaten up, do less. Recovery is where the deficit + training actually turn into results."},
+    5:{title:"Full-Body Conditioning",rest:false,focus:"Dumbbell complex + HIIT. High burn, short and brutal.",
+      sections:[
+        {lab:"Warm-up · 5 min",ex:[
+          {n:"High knees, butt kicks, arm swings",r:"3 min"},
+          {n:"Bodyweight squats + push-ups",r:"10 each"}]},
+        {lab:"DB complex · 4–5 rounds · rest 90s",ex:[
+          {n:"Deadlift → Bent row → Hang clean → Front squat → Push press → Reverse lunge",s:"Don't put the DBs down within a round.",r:"5 reps each move"}]},
+        {lab:"HIIT finisher · 4 rounds · 40s on / 20s off",ex:[
+          {n:"DB thrusters",r:"40s"},
+          {n:"Mountain climbers",r:"40s"},
+          {n:"DB swings",r:"40s"},
+          {n:"Burpees",r:"40s"}]}
+      ],note:"Cooldown: full-body stretch + 5 min slow nasal breathing. Pick a weight you can keep moving — form over load on the complex."},
+    6:{title:"Mixed Strength + Core",rest:false,focus:"Full-body hypertrophy to round out the week before the rotation resets.",
+      sections:[
+        {lab:"Warm-up · 5 min",ex:[
+          {n:"Full-body dynamic flow",r:"5 min"}]},
+        {lab:"Main · rest 60–75s",ex:[
+          {n:"DB goblet squat",r:"3 × 12"},
+          {n:"DB floor press",r:"3 × 10"},
+          {n:"DB bent-over row",r:"3 × 10"},
+          {n:"DB Romanian deadlift",r:"3 × 10"},
+          {n:"DB Arnold press",r:"3 × 10"},
+          {n:"DB curl + overhead extension superset",r:"3 × 12 each"}]},
+        {lab:"Core · 3 rounds",ex:[
+          {n:"Bicycle crunch 20 / side plank 30s per side / flutter kicks 30s",r:"3 rounds"}]}
+      ],note:"Cooldown: 5 min stretch. Next day the rotation loops back to Day 1."}
+  };
+
+  /* ---------------- DATA: SCHEDULE BLOCKS (11–8 day) ----------------
+     mins = minutes from midnight. kind drives colour + behaviour. */
+  var SCHEDULE=[
+    {t:"7:30",mins:450,kind:"personal",name:"Wake + hydrate",detail:"Water first, no screens. Light mobility."},
+    {t:"8:00",mins:480,kind:"workout",name:"Workout",detail:"__WORKOUT__",pill:"workout"},
+    {t:"9:00",mins:540,kind:"meal",name:"Shower + breakfast",detail:"__BREAKFAST__",pill:"meal"},
+    {t:"9:30",mins:570,kind:"focus",name:"Deep work · block 1",detail:"Your quietest window — no meetings. Hardest analytical work: SQL, pipeline design, architecture. Protected.",pill:"focus",protect:[570,660]},
+    {t:"11:00",mins:660,kind:"work",name:"Work · calendar-driven",detail:"Meetings, reviews, collaborative work. Scheduled meetings land here.",pill:"work",catch:[660,810]},
+    {t:"1:30",mins:810,kind:"meal",name:"Lunch",detail:"__LUNCH__",pill:"meal"},
+    {t:"2:15",mins:855,kind:"flex",name:"Flex block",detail:"Meetings if booked, deep work if clear.",pill:"flex",flex:[855,960]},
+    {t:"4:00",mins:960,kind:"meal",name:"Break + snack",detail:"__SNACK__",pill:"meal"},
+    {t:"4:15",mins:975,kind:"focus",name:"Deep work · block 2",detail:"Second protected focus window — analysis, code review, writing. Decline meetings here when you can.",pill:"focus",protect:[975,1080]},
+    {t:"6:00",mins:1080,kind:"work",name:"Work · calendar-driven",detail:"Later meetings, async replies, wrap-up tasks.",pill:"work",catch:[1080,1200]},
+    {t:"8:00",mins:1200,kind:"personal",name:"Wrap-up + hard stop",detail:"Close loops, note tomorrow's top priority, clear the desk.",pill:"personal"},
+    {t:"8:15",mins:1215,kind:"personal",name:"Transition + personal",detail:"Decompress, family, errands.",pill:"personal"},
+    {t:"9:00",mins:1260,kind:"meal",name:"Dinner",detail:"__DINNER__",pill:"meal"},
+    {t:"9:45",mins:1305,kind:"personal",name:"Personal time",detail:"Reading, family-history projects, downtime.",pill:"personal"},
+    {t:"11:00",mins:1380,kind:"personal",name:"Wind-down",detail:"Screens off, dim lights, prep for tomorrow.",pill:"personal"},
+    {t:"11:30",mins:1410,kind:"personal",name:"Sleep",detail:"~8 hours before a 7:30 wake.",pill:"personal"}
+  ];
+
+  var DAY_TAGS={1:"Chicken",2:"Veg",3:"Chicken",4:"Light · rest",5:"Chicken",6:"Veg"};
+
+  /* ---------------- STATE ---------------- */
+  function loadDay(){try{var v=parseInt(localStorage.getItem(DAYKEY),10);return (v>=1&&v<=6)?v:1;}catch(e){return 1;}}
+  function saveDay(d){try{localStorage.setItem(DAYKEY,String(d));}catch(e){}}
+  var curDay=loadDay();
+
+  function loadMtgs(){try{var r=localStorage.getItem(KEY);return r?JSON.parse(r):[];}catch(e){return [];}}
+  function saveMtgs(a){try{localStorage.setItem(KEY,JSON.stringify(a));}catch(e){alert('Could not save — browser is blocking storage. Use Export to keep your meetings.');}}
+
+  /* ---------------- HELPERS ---------------- */
+  function pad(n){return n<10?'0'+n:''+n;}
+  function fmt(mins){var h=Math.floor(mins/60),m=mins%60;var ap=h>=12?'PM':'AM';var hh=h%12;if(hh===0)hh=12;return hh+':'+pad(m)+' '+ap;}
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  var WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  function meetingsForToday(){
+    var arr=loadMtgs();
+    var now=new Date();
+    var todayStr=now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate());
+    var wd=now.getDay();
+    return arr.filter(function(m){
+      if(m.type==='once')return m.date===todayStr;
+      return m.days&&m.days.indexOf(wd)>-1;
+    }).map(function(m){
+      var p=m.time.split(':');var start=(+p[0])*60+(+p[1]);
+      return {name:m.name,start:start,end:start+(+m.dur||30),time:m.time,recLabel:m.type==='once'?'once':recLabel(m.days)};
+    }).sort(function(a,b){return a.start-b.start;});
+  }
+  function recLabel(days){
+    if(!days)return '';
+    if(days.length===7)return 'daily';
+    var mf=[1,2,3,4,5];
+    if(days.length===5&&mf.every(function(d){return days.indexOf(d)>-1;}))return 'Mon–Fri';
+    return days.slice().sort(function(a,b){return a-b;}).map(function(d){return WD[d];}).join(' ');
+  }
+
+  /* ---------------- RENDER: DAY PILLS ---------------- */
+  function renderPills(){
+    var html='';
+    for(var d=1;d<=6;d++){
+      html+='<button class="'+(d===curDay?'on':'')+'" data-day="'+d+'">Day '+d+
+            '<span class="tag-mini">'+DAY_TAGS[d]+'</span></button>';
+    }
+    $('dayPills').innerHTML=html;
+    Array.prototype.forEach.call($('dayPills').querySelectorAll('button'),function(b){
+      b.addEventListener('click',function(){curDay=+b.getAttribute('data-day');saveDay(curDay);renderAll();});
+    });
+  }
+
+  /* ---------------- RENDER: SPINE ---------------- */
+  function renderSpine(){
+    var mtgs=meetingsForToday();
+    var day=MEALS[curDay];
+    var subs={
+      '__WORKOUT__':'Today: <a href="#training">'+esc(TRAIN[curDay].title)+'</a>. '+(TRAIN[curDay].rest?'Recovery — no dumbbells.':'Lift before the day starts; evening sessions get skipped.'),
+      '__BREAKFAST__':esc(day.meals[0].name)+' · '+day.meals[0].pg,
+      '__LUNCH__':esc(day.meals[1].name)+' · '+day.meals[1].pg,
+      '__SNACK__':esc(day.meals[2].name)+' · '+day.meals[2].pg,
+      '__DINNER__':esc(day.meals[3].name)+' · '+day.meals[3].pg
+    };
+
+    var html='<div class="now-line" id="nowLine"><span class="now-tag" id="nowTag"></span></div>';
+    SCHEDULE.forEach(function(b){
+      var detail=b.detail;
+      if(subs[detail])detail=subs[detail];
+
+      html+='<div class="block k-'+b.kind+'">';
+      html+='<div class="t">'+b.t+'</div>';
+      html+='<div class="card">';
+      html+='<div class="ctop"><span class="name">'+esc(b.name)+'</span>';
+      if(b.pill)html+='<span class="pill '+b.pill+'">'+pillLabel(b.pill)+'</span>';
+      html+='</div>';
+      html+='<div class="detail">'+detail+'</div>';
+
+      /* protected-block clash warning */
+      if(b.protect){
+        var clashes=mtgs.filter(function(m){return m.start<b.protect[1]&&m.end>b.protect[0];});
+        if(clashes.length){
+          html+='<div class="warn"><b>Heads up:</b> '+clashes.length+' meeting'+(clashes.length>1?'s':'')+
+                ' overlap'+(clashes.length>1?'':'s')+' this focus block — '+
+                clashes.map(function(m){return esc(m.name)+' ('+fmt(m.start)+')';}).join(', ')+
+                '. Move it if you can.</div>';
+        }
+      }
+
+      /* flex block resolution */
+      if(b.flex){
+        var inFlex=mtgs.filter(function(m){return m.start<b.flex[1]&&m.end>b.flex[0];});
+        if(inFlex.length){
+          html+='<div class="flex-resolved busy">→ Meetings booked: '+
+                inFlex.map(function(m){return esc(m.name)+' ('+fmt(m.start)+')';}).join(', ')+'</div>';
+        }else{
+          html+='<div class="flex-resolved focus">→ Calendar is clear — use it as a third deep-work block.</div>';
+        }
+      }
+
+      /* catch-all work windows: drop meetings in here */
+      if(b.catch){
+        var inWin=mtgs.filter(function(m){return m.start>=b.catch[0]&&m.start<b.catch[1];});
+        if(inWin.length){
+          html+='<div class="mtg-list">';
+          inWin.forEach(function(m){
+            html+='<div class="mtg-chip"><span class="mt-time">'+fmt(m.start)+'</span>'+
+                  '<span class="mt-name">'+esc(m.name)+'</span>'+
+                  '<span class="mt-rec">'+esc(m.recLabel)+'</span></div>';
+          });
+          html+='</div>';
+        }
+      }
+
+      html+='</div></div>';
+    });
+    $('spine').innerHTML=html;
+    positionNow();
+  }
+  function pillLabel(p){return {focus:'Protected',workout:'Move',meal:'Fuel',work:'Calendar',flex:'Flex',personal:'Off'}[p]||p;}
+
+  function positionNow(){
+    var nl=$('nowLine'),nt=$('nowTag');
+    if(!nl)return;
+    var now=new Date();var mins=now.getHours()*60+now.getMinutes();
+    var blocks=$('spine').querySelectorAll('.block');
+    if(mins<SCHEDULE[0].mins||mins>SCHEDULE[SCHEDULE.length-1].mins){nl.style.display='none';return;}
+    /* find bracketing blocks */
+    var idx=0;
+    for(var i=0;i<SCHEDULE.length-1;i++){if(mins>=SCHEDULE[i].mins&&mins<SCHEDULE[i+1].mins){idx=i;break;}}
+    var a=SCHEDULE[idx],b2=SCHEDULE[idx+1]||a;
+    var blkA=blocks[idx+1],blkB=blocks[idx+2]||blkA; /* +1 offset for now-line node at [0] */
+    if(!blkA){nl.style.display='none';return;}
+    var spineTop=$('spine').getBoundingClientRect().top;
+    var yA=blkA.getBoundingClientRect().top-spineTop;
+    var yB=blkB.getBoundingClientRect().top-spineTop;
+    var frac=(b2.mins>a.mins)?(mins-a.mins)/(b2.mins-a.mins):0;
+    var y=yA+(yB-yA)*frac+4;
+    nl.style.display='block';nl.style.top=y+'px';
+    nt.textContent='now '+fmt(mins);
+  }
+
+  /* ---------------- RENDER: TALLY + MEALS ---------------- */
+  function renderMeals(){
+    var day=MEALS[curDay];
+    $('tally-g').innerHTML=day.protein+'<small> g protein</small>';
+    $('tally-bar').style.width=Math.min(100,Math.round(day.protein/135*100))+'%';
+    var html='';
+    day.meals.forEach(function(m){
+      html+='<div class="meal-card">';
+      html+='<div class="when">'+esc(m.when)+'</div>';
+      html+='<div class="mname"><span>'+esc(m.name)+'</span><span class="pg">'+m.pg+'</span></div>';
+      if(m.items)html+='<div class="mitems">'+esc(m.items)+'</div>';
+      if(m.prep)html+='<div class="mprep"><b>Prep ·</b> '+esc(m.prep)+'</div>';
+      html+='</div>';
+    });
+    $('mealGrid').innerHTML=html;
+  }
+
+  /* ---------------- RENDER: TRAINING ---------------- */
+  function renderTrain(){
+    var t=TRAIN[curDay];
+    var html='<div class="train-card'+(t.rest?' rest':'')+'">';
+    html+='<div class="train-head"><h3>Day '+curDay+' · '+esc(t.title)+'</h3></div>';
+    html+='<div class="train-focus">'+esc(t.focus)+'</div>';
+    t.sections.forEach(function(s){
+      html+='<div class="tblock"><div class="tblock-lab">'+esc(s.lab)+'</div>';
+      s.ex.forEach(function(e){
+        html+='<div class="ex"><div class="exn">'+esc(e.n)+(e.s?'<small>'+esc(e.s)+'</small>':'')+'</div>';
+        html+='<div class="exr">'+esc(e.r)+'</div></div>';
+      });
+      html+='</div>';
+    });
+    if(t.note)html+='<div class="tnote">'+esc(t.note)+'</div>';
+    html+='</div>';
+    $('trainCard').innerHTML=html;
+  }
+
+  /* ---------------- RENDER: MEETINGS LIST ---------------- */
+  function renderMtgList(){
+    var arr=loadMtgs().slice().sort(function(a,b){
+      return (a.time<b.time?-1:1);
+    });
+    var list=$('mlist');
+    if(!arr.length){list.innerHTML='<div class="mlist-empty">No meetings yet. Add one above and it will appear on your timeline on the right days.</div>';return;}
+    list.innerHTML=arr.map(function(m,i){
+      var p=m.time.split(':');var start=(+p[0])*60+(+p[1]);
+      var meta;
+      if(m.type==='once'){
+        var d=new Date(m.date+'T00:00');
+        meta=(isNaN(d)?m.date:(d.getDate()+' '+d.toLocaleString('en',{month:'short'})))+' · one-off · '+m.dur+' min';
+      }else{
+        meta=recLabel(m.days)+' · '+m.dur+' min';
+      }
+      return '<div class="mrow"><div class="mr-time">'+fmt(start)+'</div>'+
+        '<div class="mr-body"><div class="mr-name">'+esc(m.name)+'</div>'+
+        '<div class="mr-meta">'+esc(meta)+'</div></div>'+
+        '<button class="mr-x" data-i="'+i+'" title="Delete">&times;</button></div>';
+    }).join('');
+    Array.prototype.forEach.call(list.querySelectorAll('.mr-x'),function(btn){
+      btn.addEventListener('click',function(){
+        var sorted=loadMtgs().slice().sort(function(a,b){return (a.time<b.time?-1:1);});
+        var target=sorted[+btn.getAttribute('data-i')];
+        var arr2=loadMtgs().filter(function(m){return !(m.name===target.name&&m.time===target.time&&m.type===target.type&&(m.date||'')===(target.date||''));});
+        saveMtgs(arr2);renderMtgList();renderSpine();
+      });
+    });
+  }
+
+  function renderAll(){renderPills();renderSpine();renderMeals();renderTrain();renderMtgList();}
+
+  /* ---------------- MEETING FORM ---------------- */
+  var mode='once';var selDays=[1,2,3,4,5];
+  function buildWeekdays(){
+    var html='';
+    ['M','T','W','T','F','S','S'].forEach(function(l,i){
+      var wd=(i+1)%7; /* Mon=1..Sun=0 */
+      html+='<button data-wd="'+wd+'" class="'+(selDays.indexOf(wd)>-1?'on':'')+'">'+l+'</button>';
+    });
+    $('weekdays').innerHTML=html;
+    Array.prototype.forEach.call($('weekdays').querySelectorAll('button'),function(b){
+      b.addEventListener('click',function(){
+        var wd=+b.getAttribute('data-wd');
+        var idx=selDays.indexOf(wd);
+        if(idx>-1)selDays.splice(idx,1);else selDays.push(wd);
+        b.classList.toggle('on');
+      });
+    });
+  }
+  function setMode(m){
+    mode=m;
+    $('seg-once').classList.toggle('on',m==='once');
+    $('seg-rec').classList.toggle('on',m==='recurring');
+    $('once-wrap').style.display=m==='once'?'flex':'none';
+    $('rec-wrap').style.display=m==='recurring'?'flex':'none';
+  }
+  $('seg-once').addEventListener('click',function(){setMode('once');});
+  $('seg-rec').addEventListener('click',function(){setMode('recurring');});
+
+  Array.prototype.forEach.call(document.querySelectorAll('.quickdays button'),function(b){
+    b.addEventListener('click',function(){
+      var q=b.getAttribute('data-q');
+      if(q==='weekdays')selDays=[1,2,3,4,5];
+      else if(q==='all')selDays=[0,1,2,3,4,5,6];
+      else selDays=[];
+      buildWeekdays();
+    });
+  });
+
+  $('m-add').addEventListener('click',function(){
+    var name=$('m-name').value.trim();
+    var time=$('m-time').value;
+    var dur=parseInt($('m-dur').value,10)||30;
+    if(!name){flash('Give the meeting a name.','err');return;}
+    if(!time){flash('Pick a start time.','err');return;}
+    var entry;
+    if(mode==='once'){
+      var date=$('m-date').value;
+      if(!date){flash('Pick a date for the one-off.','err');return;}
+      entry={type:'once',name:name,time:time,dur:dur,date:date};
+    }else{
+      if(!selDays.length){flash('Pick at least one weekday.','err');return;}
+      entry={type:'recurring',name:name,time:time,dur:dur,days:selDays.slice()};
+    }
+    var arr=loadMtgs();arr.push(entry);saveMtgs(arr);
+    $('m-name').value='';
+    flash('Added.','ok');
+    renderMtgList();renderSpine();
+  });
+  function flash(msg,kind){
+    var el=$('m-msg');el.textContent=msg;
+    el.style.color=kind==='err'?'var(--chilli)':'var(--herb)';
+    setTimeout(function(){el.textContent='';},2600);
+  }
+
+  /* export / import */
+  $('m-export').addEventListener('click',function(){
+    var blob=new Blob([JSON.stringify(loadMtgs(),null,2)],{type:'application/json'});
+    var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download='daily-os-meetings.json';a.click();URL.revokeObjectURL(a.href);
+  });
+  $('m-import').addEventListener('click',function(){$('m-file').click();});
+  $('m-file').addEventListener('change',function(ev){
+    var f=ev.target.files[0];if(!f)return;
+    var rd=new FileReader();
+    rd.onload=function(){
+      try{
+        var data=JSON.parse(rd.result);
+        if(!Array.isArray(data))throw 0;
+        var arr=loadMtgs();
+        data.forEach(function(m){if(m&&m.name&&m.time)arr.push(m);});
+        saveMtgs(arr);renderMtgList();renderSpine();flash('Imported.','ok');
+      }catch(e){flash('That file could not be read.','err');}
+    };
+    rd.readAsText(f);ev.target.value='';
+  });
+
+  /* ---------------- INIT ---------------- */
+  (function(){
+    var now=new Date();
+    $('m-date').value=now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate());
+    buildWeekdays();setMode('once');
+    renderAll();
+    /* keep the now-marker live */
+    setInterval(positionNow,60000);
+    window.addEventListener('resize',positionNow);
+  })();
+})();
+</script>
+</body>
+</html>

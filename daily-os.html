@@ -193,7 +193,77 @@
 
   footer{margin-top:50px;padding:24px 0;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);text-align:center}
 
+  /* ---- AI chat assistant ---- */
+  .ai-fab{position:fixed;right:calc(18px + env(safe-area-inset-right));bottom:calc(18px + env(safe-area-inset-bottom));z-index:80;
+    width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;
+    background:var(--ink);color:var(--surface);box-shadow:0 6px 20px rgba(30,40,32,.28);
+    font-family:'Bricolage Grotesque';font-weight:800;font-size:18px;transition:transform .15s,opacity .15s}
+  .ai-fab:hover{transform:translateY(-2px)}
+  .ai-fab.hidden{opacity:0;pointer-events:none;transform:scale(.6)}
+
+  .ai-drawer{position:fixed;right:0;bottom:0;z-index:90;
+    width:min(440px,100%);height:min(640px,88vh);
+    display:flex;flex-direction:column;
+    background:var(--paper);border-top-left-radius:18px;border-top:1px solid var(--line);border-left:1px solid var(--line);
+    box-shadow:0 -8px 40px rgba(30,40,32,.22);
+    transform:translateY(110%);transition:transform .25s ease;
+    padding-bottom:env(safe-area-inset-bottom)}
+  .ai-drawer.open{transform:translateY(0)}
+  .ai-head{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--line)}
+  .ai-head .ai-title{font-family:'Bricolage Grotesque';font-weight:800;font-size:16px}
+  .ai-head .ai-title span{color:var(--herb)}
+  .ai-head .ai-sub{font-size:11.5px;color:var(--muted);margin-top:1px}
+  .ai-icon-btn{margin-left:auto;border:1px solid var(--line);background:var(--surface);color:var(--muted);
+    width:34px;height:34px;border-radius:9px;cursor:pointer;font-size:16px;line-height:1}
+  .ai-icon-btn+.ai-icon-btn{margin-left:6px}
+  .ai-icon-btn:hover{color:var(--herb);border-color:var(--herb)}
+
+  .ai-settings{display:none;padding:14px 16px;border-bottom:1px solid var(--line);background:var(--surface)}
+  .ai-settings.open{display:block}
+  .ai-settings label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:0 0 5px}
+  .ai-settings input,.ai-settings select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;
+    background:var(--paper);font:inherit;font-size:13.5px;color:var(--ink);margin-bottom:11px}
+  .ai-settings input:focus,.ai-settings select:focus{outline:none;border-color:var(--herb)}
+  .ai-note{font-size:11.5px;color:var(--muted);line-height:1.5;margin-bottom:11px}
+  .ai-note b{color:var(--chilli)}
+
+  .ai-msgs{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:11px}
+  .ai-empty{font-size:13px;color:var(--muted);text-align:center;margin:auto;max-width:30ch;line-height:1.6}
+  .ai-msg{max-width:88%;font-size:13.5px;line-height:1.5;padding:9px 12px;border-radius:13px;white-space:pre-wrap;word-wrap:break-word}
+  .ai-msg.user{align-self:flex-end;background:var(--ink);color:var(--surface);border-bottom-right-radius:4px}
+  .ai-msg.bot{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px}
+  .ai-msg.sys{align-self:center;background:var(--chilli-soft);color:var(--chilli);font-size:12.5px;font-weight:500;text-align:center;max-width:100%}
+  .ai-typing{align-self:flex-start;font-size:12.5px;color:var(--muted);font-style:italic;padding:4px 2px}
+
+  .ai-prop{align-self:flex-start;max-width:92%;background:var(--surface);border:1px solid var(--turmeric);border-radius:13px;padding:11px 13px}
+  .ai-prop .ai-prop-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .ai-prop .ai-prop-tag{font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#8a610c;background:var(--turmeric-soft);padding:3px 8px;border-radius:999px}
+  .ai-prop .ai-prop-sum{font-size:13.5px;font-weight:600;line-height:1.45}
+  .ai-prop details{margin-top:8px}
+  .ai-prop summary{font-size:12px;color:var(--herb);font-weight:600;cursor:pointer}
+  .ai-prop pre{font-family:'JetBrains Mono';font-size:11px;line-height:1.45;background:var(--paper);border:1px solid var(--line);
+    border-radius:8px;padding:8px 10px;margin-top:7px;overflow-x:auto;white-space:pre-wrap;word-break:break-word}
+  .ai-prop .ai-prop-lab{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-top:8px}
+  .ai-prop .ai-prop-act{display:flex;gap:8px;margin-top:11px}
+  .ai-prop .ai-prop-act button{flex:1;padding:9px;border-radius:9px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--line)}
+  .ai-prop .ai-apply{background:var(--herb);color:#fff;border-color:var(--herb)}
+  .ai-prop .ai-apply:hover{opacity:.9}
+  .ai-prop .ai-dismiss{background:var(--paper);color:var(--muted)}
+  .ai-prop.done{border-color:var(--line);opacity:.85}
+  .ai-prop .ai-prop-status{font-size:12px;font-weight:600;margin-top:9px}
+  .ai-prop .ai-prop-status.applied{color:var(--herb)}
+  .ai-prop .ai-prop-status.dismissed{color:var(--muted)}
+
+  .ai-compose{display:flex;gap:8px;padding:11px 14px;border-top:1px solid var(--line);align-items:flex-end}
+  .ai-compose textarea{flex:1;resize:none;max-height:120px;padding:10px 12px;border:1px solid var(--line);border-radius:11px;
+    background:var(--surface);font:inherit;font-size:14px;color:var(--ink);line-height:1.4}
+  .ai-compose textarea:focus{outline:none;border-color:var(--herb)}
+  .ai-send{border:none;background:var(--ink);color:var(--surface);font:inherit;font-weight:600;font-size:14px;
+    padding:11px 16px;border-radius:11px;cursor:pointer}
+  .ai-send:disabled{opacity:.5;cursor:default}
+
   @media (max-width:520px){
+    .ai-drawer{width:100%;height:84vh;border-radius:16px 16px 0 0}
     .spine{padding-left:60px}
     .spine::before{left:48px}
     .now-line{left:34px}
@@ -316,15 +386,56 @@
 
 </div>
 
+<!-- AI ASSISTANT -->
+<button class="ai-fab" id="aiFab" aria-label="Open planning assistant">AI</button>
+
+<div class="ai-drawer" id="aiDrawer" role="dialog" aria-label="Planning assistant">
+  <div class="ai-head">
+    <div>
+      <div class="ai-title">Plan <span>assistant</span></div>
+      <div class="ai-sub">Ask Claude to reshape your meals, training, schedule or meetings</div>
+    </div>
+    <button class="ai-icon-btn" id="aiSettingsBtn" title="Settings" aria-label="Settings">⚙</button>
+    <button class="ai-icon-btn" id="aiClose" title="Close" aria-label="Close">×</button>
+  </div>
+
+  <div class="ai-settings" id="aiSettings">
+    <label for="ai-key">Anthropic API key</label>
+    <input type="password" id="ai-key" placeholder="sk-ant-…" autocomplete="off" spellcheck="false">
+    <label for="ai-model">Model</label>
+    <select id="ai-model">
+      <option value="claude-opus-4-8">Claude Opus 4.8 — most capable</option>
+      <option value="claude-sonnet-4-6">Claude Sonnet 4.6 — faster / cheaper</option>
+    </select>
+    <div class="ai-note"><b>Stays in this browser only.</b> The key is saved to this device's local
+      storage and sent straight to Anthropic. Calls bill to your account. Don't host this file
+      publicly with a key saved.</div>
+    <button class="btn ghost" id="aiReset" style="font-size:13px;padding:9px 14px">Reset plan to defaults</button>
+  </div>
+
+  <div class="ai-msgs" id="aiMsgs"></div>
+
+  <div class="ai-compose">
+    <textarea id="ai-input" rows="1" placeholder="e.g. Make Day 1 dinner higher protein"></textarea>
+    <button class="ai-send" id="ai-send">Send</button>
+  </div>
+</div>
+
 <script>
 (function(){
   "use strict";
   var $=function(id){return document.getElementById(id);};
   var KEY='daily_os_meetings_v1';
   var DAYKEY='daily_os_day_v1';
+  var MEALSKEY='daily_os_meals_v1';
+  var TRAINKEY='daily_os_training_v1';
+  var SCHEDKEY='daily_os_schedule_v1';
+  var APIKEY_KEY='daily_os_apikey_v1';
+  var MODELKEY='daily_os_model_v1';
+  var CHATKEY='daily_os_chat_v1';
 
   /* ---------------- DATA: MEALS (6-day rotation) ---------------- */
-  var MEALS={
+  var DEFAULT_MEALS={
     1:{tag:"Chicken",protein:115,meals:[
       {when:"Breakfast · before 9",name:"Egg bhurji (3 eggs) + 1 multigrain roti",pg:"~24 g",items:"Onion, tomato, green chilli, turmeric, coriander.",prep:"Scramble on low heat just until set — don't overcook. Drop a yolk or two to cut calories."},
       {when:"Lunch tiffin · 1:30",name:"Grilled chicken tikka (150 g, dry) + 2 jowar roti",pg:"~44 g",items:"Hung-curd marinade, ginger-garlic, garam masala, lemon.",prep:"Marinate 30 min+ (overnight best). Air-fry/grill/pan-sear ~15 min. Dry tikka reheats without going rubbery — best dabba format."},
@@ -364,7 +475,7 @@
   };
 
   /* ---------------- DATA: TRAINING (6-day, home + dumbbells) ---------------- */
-  var TRAIN={
+  var DEFAULT_TRAIN={
     1:{title:"Upper · Push",rest:false,focus:"Chest, shoulders, triceps. Pairs with a high-protein chicken day.",
       sections:[
         {lab:"Warm-up · 5 min",ex:[
@@ -455,7 +566,7 @@
 
   /* ---------------- DATA: SCHEDULE BLOCKS (11–8 day) ----------------
      mins = minutes from midnight. kind drives colour + behaviour. */
-  var SCHEDULE=[
+  var DEFAULT_SCHEDULE=[
     {t:"7:30",mins:450,kind:"personal",name:"Wake + hydrate",detail:"Water first, no screens. Light mobility."},
     {t:"8:00",mins:480,kind:"workout",name:"Workout",detail:"__WORKOUT__",pill:"workout"},
     {t:"9:00",mins:540,kind:"meal",name:"Shower + breakfast",detail:"__BREAKFAST__",pill:"meal"},
@@ -483,6 +594,14 @@
 
   function loadMtgs(){try{var r=localStorage.getItem(KEY);return r?JSON.parse(r):[];}catch(e){return [];}}
   function saveMtgs(a){try{localStorage.setItem(KEY,JSON.stringify(a));}catch(e){alert('Could not save — browser is blocking storage. Use Export to keep your meetings.');}}
+
+  /* live, editable plan state — loaded from storage, falling back to a deep clone of the defaults */
+  function clone(o){return JSON.parse(JSON.stringify(o));}
+  function loadState(key,fallback){try{var r=localStorage.getItem(key);return r?JSON.parse(r):clone(fallback);}catch(e){return clone(fallback);}}
+  function saveState(key,val){try{localStorage.setItem(key,JSON.stringify(val));}catch(e){alert('Could not save — browser is blocking storage.');}}
+  var MEALS=loadState(MEALSKEY,DEFAULT_MEALS);
+  var TRAIN=loadState(TRAINKEY,DEFAULT_TRAIN);
+  var SCHEDULE=loadState(SCHEDKEY,DEFAULT_SCHEDULE);
 
   /* ---------------- HELPERS ---------------- */
   function pad(n){return n<10?'0'+n:''+n;}
@@ -768,12 +887,316 @@
     rd.readAsText(f);ev.target.value='';
   });
 
+  /* ================= AI PLANNING ASSISTANT ================= */
+  var aiMessages=loadChat();
+  var aiBusy=false;
+  function loadChat(){try{var r=localStorage.getItem(CHATKEY);return r?JSON.parse(r):[];}catch(e){return [];}}
+  function saveChat(){try{localStorage.setItem(CHATKEY,JSON.stringify(aiMessages));}catch(e){}}
+
+  function getKey(){try{return localStorage.getItem(APIKEY_KEY)||'';}catch(e){return '';}}
+  function getModel(){try{return localStorage.getItem(MODELKEY)||'claude-opus-4-8';}catch(e){return 'claude-opus-4-8';}}
+
+  /* ---- drawer open/close + settings ---- */
+  function openDrawer(){$('aiDrawer').classList.add('open');$('aiFab').classList.add('hidden');
+    if(!aiMessages.length)scrollMsgs();setTimeout(function(){$('ai-input').focus();},250);}
+  function closeDrawer(){$('aiDrawer').classList.remove('open');$('aiFab').classList.remove('hidden');}
+  function toggleSettings(){$('aiSettings').classList.toggle('open');}
+
+  /* ---- message list rendering ---- */
+  function scrollMsgs(){var m=$('aiMsgs');m.scrollTop=m.scrollHeight;}
+  function bubble(role,text){
+    var d=document.createElement('div');d.className='ai-msg '+role;d.textContent=text;
+    $('aiMsgs').appendChild(d);scrollMsgs();return d;
+  }
+  function clearEmpty(){var e=$('aiMsgs').querySelector('.ai-empty');if(e)e.remove();}
+  function showEmptyIfNeeded(){
+    if(!$('aiMsgs').children.length){
+      var e=document.createElement('div');e.className='ai-empty';
+      e.textContent='Ask me to tweak a meal, swap an exercise, retime a block, or book a meeting. I’ll show you the change before anything updates.';
+      $('aiMsgs').appendChild(e);
+    }
+  }
+  function renderChatHistory(){
+    var box=$('aiMsgs');box.innerHTML='';
+    aiMessages.forEach(function(m){
+      if(m.role==='user'){
+        if(typeof m.content==='string')bubble('user',m.content);
+        /* tool_result arrays are internal — skip */
+      }else if(m.role==='assistant'&&Array.isArray(m.content)){
+        m.content.forEach(function(b){
+          if(b.type==='text'&&b.text)bubble('bot',b.text);
+          else if(b.type==='tool_use')renderProposal(b.input,false);
+        });
+      }
+    });
+    showEmptyIfNeeded();scrollMsgs();
+  }
+
+  /* ---- locate / merge / apply ---- */
+  function mergeNode(before,value){return Object.assign({},before||{},value||{});}
+  function locate(input){
+    var d=input.domain,loc=input.locator||{};
+    if(d==='meals'){
+      var day=loc.day;if(!(day>=1&&day<=6)||!MEALS[day])return null;
+      if(loc.mealIndex!=null){
+        var mi=loc.mealIndex;if(!MEALS[day].meals||!MEALS[day].meals[mi])return null;
+        return {get:function(){return MEALS[day].meals[mi];},set:function(v){MEALS[day].meals[mi]=v;},persist:function(){saveState(MEALSKEY,MEALS);}};
+      }
+      return {get:function(){return MEALS[day];},set:function(v){MEALS[day]=v;},persist:function(){saveState(MEALSKEY,MEALS);}};
+    }
+    if(d==='training'){var day2=loc.day;if(!(day2>=1&&day2<=6)||!TRAIN[day2])return null;
+      return {get:function(){return TRAIN[day2];},set:function(v){TRAIN[day2]=v;},persist:function(){saveState(TRAINKEY,TRAIN);}};}
+    if(d==='schedule'){var bi=loc.blockIndex;if(bi==null||!SCHEDULE[bi])return null;
+      return {get:function(){return SCHEDULE[bi];},set:function(v){SCHEDULE[bi]=v;},persist:function(){saveState(SCHEDKEY,SCHEDULE);}};}
+    return null;
+  }
+  function findMtgIndex(arr,match){
+    if(!match)return -1;
+    for(var i=0;i<arr.length;i++){if(arr[i].name===match.name&&(!match.time||arr[i].time===match.time))return i;}
+    return -1;
+  }
+  /* returns {before, after} without mutating, or {error} */
+  function preview(input){
+    var op=input.operation,val=input.value||{};
+    if(input.domain==='meetings'){
+      var arr=loadMtgs();
+      if(op==='add')return {before:null,after:val};
+      var idx=findMtgIndex(arr,(input.locator||{}).match);
+      if(idx<0)return {error:'No matching meeting found.'};
+      if(op==='delete')return {before:arr[idx],after:null};
+      return {before:arr[idx],after:mergeNode(arr[idx],val)};
+    }
+    var loc=locate(input);
+    if(!loc)return {error:'Could not locate the target — the day/index looks out of range.'};
+    var before=loc.get();
+    return {before:before,after:mergeNode(before,val)};
+  }
+  /* commits the change to state + storage, returns {error} on failure */
+  function applyChange(input){
+    var op=input.operation,val=input.value||{};
+    if(input.domain==='meetings'){
+      var arr=loadMtgs();
+      if(op==='add'){
+        var m=Object.assign({dur:30},val);
+        if(!m.type)m.type=m.days?'recurring':'once';
+        arr.push(m);saveMtgs(arr);
+      }else{
+        var idx=findMtgIndex(arr,(input.locator||{}).match);
+        if(idx<0)return {error:'No matching meeting found.'};
+        if(op==='delete')arr.splice(idx,1);
+        else arr[idx]=mergeNode(arr[idx],val);
+        saveMtgs(arr);
+      }
+    }else{
+      var loc=locate(input);
+      if(!loc)return {error:'Could not locate the target.'};
+      loc.set(mergeNode(loc.get(),val));loc.persist();
+    }
+    renderAll();
+    return {};
+  }
+
+  /* ---- proposal card ---- */
+  function renderProposal(input,interactive){
+    var card=document.createElement('div');card.className='ai-prop';
+    var pv=preview(input);
+    var beforeTxt=pv.before==null?'—':JSON.stringify(pv.before,null,2);
+    var afterTxt=pv.after==null?'(removed)':JSON.stringify(pv.after,null,2);
+    var html='<div class="ai-prop-top"><span class="ai-prop-tag">'+esc(input.domain)+' · '+esc(input.operation)+'</span></div>';
+    html+='<div class="ai-prop-sum">'+esc(input.summary||'Proposed change')+'</div>';
+    if(pv.error){
+      html+='<div class="ai-prop-status dismissed">⚠ '+esc(pv.error)+'</div>';
+      card.innerHTML=html;card.className+=' done';$('aiMsgs').appendChild(card);scrollMsgs();return;
+    }
+    html+='<details><summary>Preview change</summary>'+
+          '<div class="ai-prop-lab">Now</div><pre>'+esc(beforeTxt)+'</pre>'+
+          '<div class="ai-prop-lab">After</div><pre>'+esc(afterTxt)+'</pre></details>';
+    if(interactive){
+      html+='<div class="ai-prop-act"><button class="ai-apply">Apply</button><button class="ai-dismiss">Dismiss</button></div>';
+    }else{
+      html+='<div class="ai-prop-status dismissed">Proposed earlier</div>';
+    }
+    card.innerHTML=html;
+    if(interactive){
+      card.querySelector('.ai-apply').addEventListener('click',function(){
+        var r=applyChange(input);
+        var act=card.querySelector('.ai-prop-act');
+        if(r.error){
+          act.outerHTML='<div class="ai-prop-status dismissed">⚠ '+esc(r.error)+'</div>';
+        }else{
+          card.className+=' done';
+          act.outerHTML='<div class="ai-prop-status applied">✓ Applied to your plan</div>';
+        }
+      });
+      card.querySelector('.ai-dismiss').addEventListener('click',function(){
+        card.className+=' done';
+        card.querySelector('.ai-prop-act').outerHTML='<div class="ai-prop-status dismissed">Dismissed</div>';
+      });
+    }
+    $('aiMsgs').appendChild(card);scrollMsgs();
+  }
+
+  /* ---- system prompt + tools ---- */
+  function buildSystemPrompt(){
+    var sched=SCHEDULE.map(function(b,i){return Object.assign({_index:i},b);});
+    return "You are the planning assistant inside \"Daily OS\", a personal day-planner web app for one user. "+
+      "The day is an 11am–8pm workday with two protected deep-work focus blocks, a morning home workout "+
+      "(dumbbells + bodyweight), and a high-protein Indian meal rotation aimed at a calorie deficit. There is a "+
+      "6-day rotation: each day (1–6) has its own meals and workout.\n\n"+
+      "You can change four areas: meals, training, schedule, meetings. When the user wants a change, call the "+
+      "propose_change tool with ONE concrete edit per change. The user previews a before/after and clicks Apply — "+
+      "nothing changes until they do. When the user only asks a question or wants advice, just reply in text. "+
+      "Keep replies short and practical (a few sentences).\n\n"+
+      "Field notes:\n"+
+      "- meals[day].meals is an array [breakfast, lunch, snack, dinner] → mealIndex 0–3. A meal item is "+
+      "{when, name, pg (e.g. \"~24 g\"), items, prep}. meals[day] itself has {tag, protein} where protein is the "+
+      "day's total grams shown in the tally — if you change a meal's protein meaningfully, also propose updating "+
+      "meals[day].protein (a separate propose_change with locator {day} and value {protein}).\n"+
+      "- training[day] is {title, rest(bool), focus, sections:[{lab, ex:[{n, s?, r}]}], note}. Provide the whole "+
+      "field you change (e.g. the full sections array).\n"+
+      "- schedule is an array; use the _index shown as blockIndex. A block is {t, mins, kind, name, detail, pill}.\n"+
+      "- meetings: add → value {type:\"once\"|\"recurring\", name, time(\"HH:MM\"), dur(min), date(\"YYYY-MM-DD\" for once) "+
+      "or days([0-6], 0=Sun) for recurring}. update/delete → locator.match {name, time}.\n\n"+
+      "Currently selected rotation day: "+curDay+".\n\n"+
+      "CURRENT PLAN STATE (JSON):\n"+
+      "MEALS = "+JSON.stringify(MEALS)+"\n\n"+
+      "TRAINING = "+JSON.stringify(TRAIN)+"\n\n"+
+      "SCHEDULE = "+JSON.stringify(sched)+"\n\n"+
+      "MEETINGS = "+JSON.stringify(loadMtgs())+"\n";
+  }
+  function buildTools(){
+    return [{
+      name:'propose_change',
+      description:'Propose a single concrete edit to the user\'s plan (meals, training, schedule, or meetings). '+
+        'The user previews and approves before anything changes. Include in "value" the full fields you want to set. '+
+        'Call this whenever the user asks to change, add, or remove something.',
+      input_schema:{
+        type:'object',
+        properties:{
+          domain:{type:'string',enum:['meals','training','schedule','meetings']},
+          operation:{type:'string',enum:['update','add','delete'],description:'update edits an existing item; add/delete are mainly for meetings'},
+          locator:{type:'object',description:'Where the change applies',properties:{
+            day:{type:'integer',description:'rotation day 1–6 (meals, training)'},
+            mealIndex:{type:'integer',description:'0=breakfast,1=lunch,2=snack,3=dinner (meals)'},
+            blockIndex:{type:'integer',description:'index into the schedule array (schedule)'},
+            match:{type:'object',description:'identify a meeting to update/delete',properties:{name:{type:'string'},time:{type:'string'}}}
+          }},
+          value:{type:'object',description:'The new or edited fields for the target (see system prompt for shapes).'},
+          summary:{type:'string',description:'One concise sentence describing the change for the user.'}
+        },
+        required:['domain','operation','summary']
+      }
+    }];
+  }
+
+  /* ---- send / call Claude ---- */
+  function setBusy(b){aiBusy=b;$('ai-send').disabled=b;}
+  function sendMessage(){
+    if(aiBusy)return;
+    var input=$('ai-input');var text=input.value.trim();
+    if(!text)return;
+    if(!getKey()){bubble('sys','Add your Anthropic API key in settings (⚙) to start.');$('aiSettings').classList.add('open');return;}
+    clearEmpty();
+    input.value='';input.style.height='auto';
+    bubble('user',text);
+    aiMessages.push({role:'user',content:text});
+    saveChat();
+    var typing=document.createElement('div');typing.className='ai-typing';typing.textContent='Claude is thinking…';
+    $('aiMsgs').appendChild(typing);scrollMsgs();
+    setBusy(true);
+    callClaude().then(function(data){
+      typing.remove();
+      var blocks=data.content||[];
+      blocks.forEach(function(b){
+        if(b.type==='text'&&b.text)bubble('bot',b.text);
+        else if(b.type==='tool_use')renderProposal(b.input,true);
+      });
+      aiMessages.push({role:'assistant',content:blocks});
+      var toolUses=blocks.filter(function(b){return b.type==='tool_use';});
+      if(toolUses.length){
+        aiMessages.push({role:'user',content:toolUses.map(function(b){
+          return {type:'tool_result',tool_use_id:b.id,content:'Proposal shown to the user; awaiting their approval.'};
+        })});
+      }
+      saveChat();
+    }).catch(function(err){
+      typing.remove();
+      bubble('sys',err&&err.message?err.message:'Something went wrong.');
+      /* roll back the unanswered user turn so history stays valid */
+      if(aiMessages.length&&aiMessages[aiMessages.length-1].role==='user'&&typeof aiMessages[aiMessages.length-1].content==='string'){
+        aiMessages.pop();saveChat();
+      }
+    }).then(function(){setBusy(false);input.focus();});
+  }
+  function callClaude(){
+    return fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'content-type':'application/json',
+        'x-api-key':getKey(),
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({
+        model:getModel(),
+        max_tokens:2048,
+        system:buildSystemPrompt(),
+        tools:buildTools(),
+        messages:aiMessages
+      })
+    }).then(function(res){
+      return res.json().catch(function(){return {};}).then(function(data){
+        if(!res.ok){
+          var msg;
+          if(res.status===401)msg='That API key looks invalid — check it in settings (⚙).';
+          else if(res.status===429)msg='Rate limited — wait a moment and try again.';
+          else if(res.status===400&&data.error&&data.error.message)msg='Request rejected: '+data.error.message;
+          else msg='API error '+res.status+(data.error&&data.error.message?': '+data.error.message:'');
+          throw new Error(msg);
+        }
+        return data;
+      });
+    },function(){throw new Error('Network error — could not reach Anthropic. Check your connection.');});
+  }
+
+  /* ---- reset plan ---- */
+  function resetPlan(){
+    if(!confirm('Reset meals, training and schedule to the built-in defaults? Your meetings are kept.'))return;
+    try{localStorage.removeItem(MEALSKEY);localStorage.removeItem(TRAINKEY);localStorage.removeItem(SCHEDKEY);}catch(e){}
+    MEALS=clone(DEFAULT_MEALS);TRAIN=clone(DEFAULT_TRAIN);SCHEDULE=clone(DEFAULT_SCHEDULE);
+    renderAll();
+    bubble('sys','Plan reset to defaults.');
+  }
+
+  function initAI(){
+    /* settings */
+    $('ai-key').value=getKey();
+    $('ai-model').value=getModel();
+    $('ai-key').addEventListener('change',function(){try{localStorage.setItem(APIKEY_KEY,$('ai-key').value.trim());}catch(e){}});
+    $('ai-model').addEventListener('change',function(){try{localStorage.setItem(MODELKEY,$('ai-model').value);}catch(e){}});
+    /* drawer controls */
+    $('aiFab').addEventListener('click',openDrawer);
+    $('aiClose').addEventListener('click',closeDrawer);
+    $('aiSettingsBtn').addEventListener('click',toggleSettings);
+    $('aiReset').addEventListener('click',resetPlan);
+    /* compose */
+    var input=$('ai-input');
+    function grow(){input.style.height='auto';input.style.height=Math.min(input.scrollHeight,120)+'px';}
+    input.addEventListener('input',grow);
+    input.addEventListener('keydown',function(e){
+      if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}
+    });
+    $('ai-send').addEventListener('click',sendMessage);
+    renderChatHistory();
+  }
+
   /* ---------------- INIT ---------------- */
   (function(){
     var now=new Date();
     $('m-date').value=now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate());
     buildWeekdays();setMode('once');
     renderAll();
+    initAI();
     /* keep the now-marker live */
     setInterval(positionNow,60000);
     window.addEventListener('resize',positionNow);

@@ -73,6 +73,9 @@
   .day-pills button .tag-mini{display:block;font-family:'Inter';font-size:10.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-top:1px;opacity:.7}
   .day-pills button.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
   .day-pills button.on .tag-mini{opacity:.85}
+  .day-pills button.today:not(.on){border-color:var(--chilli);color:var(--chilli)}
+  .day-pills button.today::after{content:"TODAY";font-family:'Inter';font-size:8.5px;font-weight:700;letter-spacing:.06em;color:var(--chilli);display:block;margin-top:2px}
+  .day-pills button.today.on::after{color:var(--turmeric)}
 
   /* section heads */
   .sec{padding:38px 0 4px}
@@ -110,6 +113,16 @@
   .pill.personal{background:#EDEAE0;color:var(--muted)}
   .pill.work{background:var(--slate-soft);color:var(--slate)}
   .pill.flex{background:#efe8da;color:#8a6d2a}
+  .pill.nowpill{background:var(--chilli);color:#fff}
+
+  /* current time-of-day block highlight */
+  .block.now-block .card{
+    border-color:var(--chilli);
+    background:var(--chilli-soft);
+    box-shadow:0 0 0 1px var(--chilli) inset, 0 6px 18px rgba(177,70,34,.14);
+  }
+  .block.now-block::before{border-color:var(--chilli);background:var(--chilli);box-shadow:0 0 0 4px var(--chilli-soft)}
+  .block.now-block .t{color:var(--chilli)}
 
   /* meeting chips inside a block */
   .mtg-list{margin-top:9px;display:flex;flex-direction:column;gap:6px}
@@ -295,7 +308,7 @@
     <p>An 11–8 workday with two protected focus windows, a morning lift, and protein anchored across four meals. Set your meetings below and the day reshapes itself — the flex block fills with deep work whenever your calendar is clear.</p>
 
     <div class="daybar">
-      <div class="daybar-lab">Pick today's rotation day — it drives your meals and your workout</div>
+      <div class="daybar-lab">Each weekday is a rotation day — Monday is Day 1. Today is auto-selected; tap any day to preview ahead.</div>
       <div class="day-pills" id="dayPills"></div>
     </div>
   </header>
@@ -375,7 +388,7 @@
   <!-- TRAINING -->
   <section class="sec" id="training">
     <div class="sec-head"><h2>What to train</h2><div class="ln"></div></div>
-    <div class="sec-sub">Home only, dumbbells + bodyweight. A 6-day split that retains muscle in a deficit. Day 4 is active recovery — it lines up with your lightest food day.</div>
+    <div class="sec-sub">Home only, dumbbells + bodyweight. A 6-day split (Mon–Sat) that retains muscle in a deficit. Day 4 is active recovery; Day 7 (Sunday) is a full off day.</div>
     <div id="trainCard"></div>
   </section>
 
@@ -474,6 +487,12 @@
       {when:"Lunch tiffin · 1:30",name:"Curd rice + 150 g paneer (veg) + roasted papad",pg:"~34 g",items:"Veg day — use paneer or extra dal instead of chicken; ½ tsp pickle.",prep:"Same curd-rice base as Day 3, paneer in place of chicken."},
       {when:"Eve snack · 4",name:"Spiced buttermilk + roasted chana (30 g)",pg:"~10 g",items:"",prep:"No sugar; jeera + black salt."},
       {when:"Dinner · 9",name:"Soya chunk curry (50 g dry) + 1 jowar roti + salad",pg:"~29 g",items:"Onion-tomato base, dry-ish gravy.",prep:"Boil soya, squeeze dry, then simmer in the masala so it soaks flavour."}
+    ]},
+    7:{tag:"Off · relaxed",protein:80,meals:[
+      {when:"Breakfast · relaxed",name:"Veggie omelette (3 eggs) + 2 multigrain toast",pg:"~24 g",items:"Whatever veg is in the fridge — onion, tomato, spinach, capsicum.",prep:"Off day — no clock. Cook slow, sit down, actually enjoy it."},
+      {when:"Lunch · home-style",name:"Dal + 1 katori curd + sabzi + 2 roti + salad",pg:"~24 g",items:"Normal home thali — keep the portions sane, the protein from dal + curd.",prep:"Eat with the family. A little ghee is fine on a rest day."},
+      {when:"Eve snack · optional",name:"Roasted chana (30 g) + chai (no sugar) or 1 fruit",pg:"~8 g",items:"",prep:"Skip it entirely if you're not hungry — full off day."},
+      {when:"Dinner · light",name:"Paneer (100 g) or 2 eggs + grilled veg + soup",pg:"~24 g",items:"Light, early-ish dinner. Go higher-carb here only if you trained hard yesterday.",prep:"One free, looser meal a week is fine — just don't make it a binge."}
     ]}
   };
 
@@ -564,7 +583,13 @@
           {n:"DB curl + overhead extension superset",r:"3 × 12 each"}]},
         {lab:"Core · 3 rounds",ex:[
           {n:"Bicycle crunch 20 / side plank 30s per side / flutter kicks 30s",r:"3 rounds"}]}
-      ],note:"Cooldown: 5 min stretch. Next day the rotation loops back to Day 1."}
+      ],note:"Cooldown: 5 min stretch. Next day is Day 7 — a full off day."},
+    7:{title:"Full Off Day",rest:true,off:true,focus:"Complete rest. No training, no dumbbells. Sunday is for recovery and life outside the plan.",
+      sections:[
+        {lab:"The whole plan",ex:[
+          {n:"Rest",s:"No workout today. Sleep in, move gently if you feel like it, but nothing structured.",r:"—"},
+          {n:"Optional easy movement",s:"A relaxed walk or light stretching only if you want it — never required.",r:"easy"}]}
+      ],note:"This is the off day the other six are built around. Recovery is when the training and the deficit actually pay off — take it."}
   };
 
   /* ---------------- DATA: SCHEDULE BLOCKS (11–8 day) ----------------
@@ -588,12 +613,17 @@
     {t:"11:30",mins:1410,kind:"personal",name:"Sleep",detail:"~8 hours before a 7:30 wake.",pill:"personal"}
   ];
 
-  var DAY_TAGS={1:"Chicken",2:"Veg",3:"Chicken",4:"Light · rest",5:"Chicken",6:"Veg"};
+  var DAY_TAGS={1:"Chicken",2:"Veg",3:"Chicken",4:"Light · rest",5:"Chicken",6:"Veg",7:"Off day"};
+  /* weekday-driven rotation: Monday is Day 1 … Saturday is Day 6, Sunday is Day 7 (full off day). */
+  var DAY_WD={1:"Mon",2:"Tue",3:"Wed",4:"Thu",5:"Fri",6:"Sat",7:"Sun"};
+  function weekdayToDay(wd){ /* JS getDay(): Sun=0,Mon=1…Sat=6 */
+    return wd===0?7:wd; /* Sun → Day 7 (off), otherwise Mon=1 … Sat=6 */
+  }
 
   /* ---------------- STATE ---------------- */
-  function loadDay(){try{var v=parseInt(localStorage.getItem(DAYKEY),10);return (v>=1&&v<=6)?v:1;}catch(e){return 1;}}
   function saveDay(d){try{localStorage.setItem(DAYKEY,String(d));}catch(e){}}
-  var curDay=loadDay();
+  /* Default to today's weekday-mapped rotation day; pills let you preview other days. */
+  var curDay=weekdayToDay(new Date().getDay());
 
   function loadMtgs(){try{var r=localStorage.getItem(KEY);return r?JSON.parse(r):[];}catch(e){return [];}}
   function saveMtgs(a){try{localStorage.setItem(KEY,JSON.stringify(a));}catch(e){alert('Could not save — browser is blocking storage. Use Export to keep your meetings.');}}
@@ -605,6 +635,9 @@
   var MEALS=loadState(MEALSKEY,DEFAULT_MEALS);
   var TRAIN=loadState(TRAINKEY,DEFAULT_TRAIN);
   var SCHEDULE=loadState(SCHEDKEY,DEFAULT_SCHEDULE);
+  /* migrate plans saved before Day 7 (Sunday off day) existed */
+  if(!MEALS[7]){MEALS[7]=clone(DEFAULT_MEALS[7]);saveState(MEALSKEY,MEALS);}
+  if(!TRAIN[7]){TRAIN[7]=clone(DEFAULT_TRAIN[7]);saveState(TRAINKEY,TRAIN);}
 
   /* ---------------- HELPERS ---------------- */
   function pad(n){return n<10?'0'+n:''+n;}
@@ -636,9 +669,11 @@
   /* ---------------- RENDER: DAY PILLS ---------------- */
   function renderPills(){
     var html='';
-    for(var d=1;d<=6;d++){
-      html+='<button class="'+(d===curDay?'on':'')+'" data-day="'+d+'">Day '+d+
-            '<span class="tag-mini">'+DAY_TAGS[d]+'</span></button>';
+    var todayDay=weekdayToDay(new Date().getDay());
+    for(var d=1;d<=7;d++){
+      var cls=(d===curDay?'on':'')+(d===todayDay?' today':'');
+      html+='<button class="'+cls.trim()+'" data-day="'+d+'">Day '+d+
+            '<span class="tag-mini">'+DAY_WD[d]+' · '+DAY_TAGS[d]+'</span></button>';
     }
     $('dayPills').innerHTML=html;
     Array.prototype.forEach.call($('dayPills').querySelectorAll('button'),function(b){
@@ -651,22 +686,31 @@
     var mtgs=meetingsForToday();
     var day=MEALS[curDay];
     var subs={
-      '__WORKOUT__':'Today: <a href="#training">'+esc(TRAIN[curDay].title)+'</a>. '+(TRAIN[curDay].rest?'Recovery — no dumbbells.':'Lift before the day starts; evening sessions get skipped.'),
+      '__WORKOUT__':'Today: <a href="#training">'+esc(TRAIN[curDay].title)+'</a>. '+(TRAIN[curDay].off?'Full off day — no workout. Sleep in.':(TRAIN[curDay].rest?'Recovery — no dumbbells.':'Lift before the day starts; evening sessions get skipped.')),
       '__BREAKFAST__':esc(day.meals[0].name)+' · '+day.meals[0].pg,
       '__LUNCH__':esc(day.meals[1].name)+' · '+day.meals[1].pg,
       '__SNACK__':esc(day.meals[2].name)+' · '+day.meals[2].pg,
       '__DINNER__':esc(day.meals[3].name)+' · '+day.meals[3].pg
     };
 
+    /* which block is happening right now? */
+    var nowM=new Date();var nowMins=nowM.getHours()*60+nowM.getMinutes();
+    var nowIdx=-1;
+    for(var ni=0;ni<SCHEDULE.length;ni++){
+      var nxt=ni+1<SCHEDULE.length?SCHEDULE[ni+1].mins:Infinity;
+      if(nowMins>=SCHEDULE[ni].mins&&nowMins<nxt){nowIdx=ni;break;}
+    }
+
     var html='<div class="now-line" id="nowLine"><span class="now-tag" id="nowTag"></span></div>';
-    SCHEDULE.forEach(function(b){
+    SCHEDULE.forEach(function(b,bi){
       var detail=b.detail;
       if(subs[detail])detail=subs[detail];
 
-      html+='<div class="block k-'+b.kind+'">';
+      html+='<div class="block k-'+b.kind+(bi===nowIdx?' now-block':'')+'">';
       html+='<div class="t">'+b.t+'</div>';
       html+='<div class="card">';
       html+='<div class="ctop"><span class="name">'+esc(b.name)+'</span>';
+      if(bi===nowIdx)html+='<span class="pill nowpill">● Now</span>';
       if(b.pill)html+='<span class="pill '+b.pill+'">'+pillLabel(b.pill)+'</span>';
       html+='</div>';
       html+='<div class="detail">'+detail+'</div>';
@@ -986,14 +1030,14 @@
   function locate(input){
     var d=input.domain,loc=input.locator||{};
     if(d==='meals'){
-      var day=loc.day;if(!(day>=1&&day<=6)||!MEALS[day])return null;
+      var day=loc.day;if(!(day>=1&&day<=7)||!MEALS[day])return null;
       if(loc.mealIndex!=null){
         var mi=loc.mealIndex;if(!MEALS[day].meals||!MEALS[day].meals[mi])return null;
         return {get:function(){return MEALS[day].meals[mi];},set:function(v){MEALS[day].meals[mi]=v;},persist:function(){saveState(MEALSKEY,MEALS);}};
       }
       return {get:function(){return MEALS[day];},set:function(v){MEALS[day]=v;},persist:function(){saveState(MEALSKEY,MEALS);}};
     }
-    if(d==='training'){var day2=loc.day;if(!(day2>=1&&day2<=6)||!TRAIN[day2])return null;
+    if(d==='training'){var day2=loc.day;if(!(day2>=1&&day2<=7)||!TRAIN[day2])return null;
       return {get:function(){return TRAIN[day2];},set:function(v){TRAIN[day2]=v;},persist:function(){saveState(TRAINKEY,TRAIN);}};}
     if(d==='schedule'){var bi=loc.blockIndex;if(bi==null||!SCHEDULE[bi])return null;
       return {get:function(){return SCHEDULE[bi];},set:function(v){SCHEDULE[bi]=v;},persist:function(){saveState(SCHEDKEY,SCHEDULE);}};}
@@ -1091,7 +1135,8 @@
     return "You are the planning assistant inside \"Daily OS\", a personal day-planner web app for one user. "+
       "The day is an 11am–8pm workday with two protected deep-work focus blocks, a morning home workout "+
       "(dumbbells + bodyweight), and a high-protein Indian meal rotation aimed at a calorie deficit. There is a "+
-      "6-day rotation: each day (1–6) has its own meals and workout.\n\n"+
+      "7-day rotation mapped to weekdays (Monday=Day 1 … Saturday=Day 6, Sunday=Day 7). Each day (1–7) has "+
+      "its own meals and workout. Day 7 (Sunday) is a full off day: no training, relaxed meals.\n\n"+
       "You can change four areas: meals, training, schedule, meetings. When the user wants a change, call the "+
       "propose_change function with ONE concrete edit per change. The user previews a before/after and clicks Apply — "+
       "nothing changes until they do. When the user only asks a question or wants advice, just reply in text. "+
@@ -1259,8 +1304,14 @@
     buildWeekdays();setMode('once');
     renderAll();
     initAI();
-    /* keep the now-marker live */
-    setInterval(positionNow,60000);
+    /* keep the now-marker + current-block highlight live */
+    var lastNowMin=-1;
+    setInterval(function(){
+      var m=new Date();var mins=m.getHours()*60+m.getMinutes();
+      /* only rebuild the spine when the minute changes the active block boundary; reposition every tick */
+      if(mins!==lastNowMin){lastNowMin=mins;renderSpine();}
+      else positionNow();
+    },30000);
     window.addEventListener('resize',positionNow);
   })();
 })();

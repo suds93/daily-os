@@ -393,23 +393,25 @@
   <div class="ai-head">
     <div>
       <div class="ai-title">Plan <span>assistant</span></div>
-      <div class="ai-sub">Ask Claude to reshape your meals, training, schedule or meetings</div>
+      <div class="ai-sub">Ask Gemini to reshape your meals, training, schedule or meetings</div>
     </div>
     <button class="ai-icon-btn" id="aiSettingsBtn" title="Settings" aria-label="Settings">⚙</button>
     <button class="ai-icon-btn" id="aiClose" title="Close" aria-label="Close">×</button>
   </div>
 
   <div class="ai-settings" id="aiSettings">
-    <label for="ai-key">Anthropic API key</label>
-    <input type="password" id="ai-key" placeholder="sk-ant-…" autocomplete="off" spellcheck="false">
+    <label for="ai-key">Google AI (Gemini) API key</label>
+    <input type="password" id="ai-key" placeholder="AIza…" autocomplete="off" spellcheck="false">
     <label for="ai-model">Model</label>
     <select id="ai-model">
-      <option value="claude-opus-4-8">Claude Opus 4.8 — most capable</option>
-      <option value="claude-sonnet-4-6">Claude Sonnet 4.6 — faster / cheaper</option>
+      <option value="gemini-2.5-pro">Gemini 2.5 Pro — most capable</option>
+      <option value="gemini-2.5-flash">Gemini 2.5 Flash — fast (recommended)</option>
+      <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash-Lite — cheapest</option>
+      <option value="gemini-2.0-flash">Gemini 2.0 Flash — previous generation</option>
     </select>
     <div class="ai-note"><b>Stays in this browser only.</b> The key is saved to this device's local
-      storage and sent straight to Anthropic. Calls bill to your account. Don't host this file
-      publicly with a key saved.</div>
+      storage and sent straight to Google. Get one free at <b>aistudio.google.com/apikey</b>. Don't
+      host this file publicly with a key saved.</div>
     <button class="btn ghost" id="aiReset" style="font-size:13px;padding:9px 14px">Reset plan to defaults</button>
   </div>
 
@@ -890,11 +892,14 @@
   /* ================= AI PLANNING ASSISTANT ================= */
   var aiMessages=loadChat();
   var aiBusy=false;
-  function loadChat(){try{var r=localStorage.getItem(CHATKEY);return r?JSON.parse(r):[];}catch(e){return [];}}
+  function loadChat(){try{var r=localStorage.getItem(CHATKEY);if(!r)return [];var a=JSON.parse(r);
+    /* keep only Gemini-shaped turns ({role,parts}); discards any older history format */
+    if(!Array.isArray(a)||a.some(function(m){return !m||!Array.isArray(m.parts);}))return [];
+    return a;}catch(e){return [];}}
   function saveChat(){try{localStorage.setItem(CHATKEY,JSON.stringify(aiMessages));}catch(e){}}
 
   function getKey(){try{return localStorage.getItem(APIKEY_KEY)||'';}catch(e){return '';}}
-  function getModel(){try{return localStorage.getItem(MODELKEY)||'claude-opus-4-8';}catch(e){return 'claude-opus-4-8';}}
+  function getModel(){try{return localStorage.getItem(MODELKEY)||'gemini-2.5-flash';}catch(e){return 'gemini-2.5-flash';}}
 
   /* ---- drawer open/close + settings ---- */
   function openDrawer(){$('aiDrawer').classList.add('open');$('aiFab').classList.add('hidden');
@@ -916,20 +921,27 @@
       $('aiMsgs').appendChild(e);
     }
   }
+  /* history is stored in Gemini "contents" shape: {role:'user'|'model', parts:[...]} */
   function renderChatHistory(){
     var box=$('aiMsgs');box.innerHTML='';
     aiMessages.forEach(function(m){
-      if(m.role==='user'){
-        if(typeof m.content==='string')bubble('user',m.content);
-        /* tool_result arrays are internal — skip */
-      }else if(m.role==='assistant'&&Array.isArray(m.content)){
-        m.content.forEach(function(b){
-          if(b.type==='text'&&b.text)bubble('bot',b.text);
-          else if(b.type==='tool_use')renderProposal(b.input,false);
-        });
-      }
+      (m.parts||[]).forEach(function(p){
+        if(p.text&&m.role==='user')bubble('user',p.text);
+        else if(p.text&&m.role==='model')bubble('bot',p.text);
+        else if(p.functionCall)renderProposal(normalizeArgs(p.functionCall.args),false);
+      });
     });
     showEmptyIfNeeded();scrollMsgs();
+  }
+  /* a propose_change function call carries locator/value as JSON strings — parse to objects */
+  function normalizeArgs(a){
+    a=a||{};
+    var out={domain:a.domain,operation:a.operation,summary:a.summary,locator:{},value:{}};
+    try{out.locator=(a.locator==null||a.locator==='')?{}:(typeof a.locator==='object'?a.locator:JSON.parse(a.locator));}
+    catch(e){out._error='Could not read the change location.';}
+    try{out.value=(a.value==null||a.value==='')?{}:(typeof a.value==='object'?a.value:JSON.parse(a.value));}
+    catch(e){out._error='Could not read the proposed value.';}
+    return out;
   }
 
   /* ---- locate / merge / apply ---- */
@@ -999,7 +1011,7 @@
   /* ---- proposal card ---- */
   function renderProposal(input,interactive){
     var card=document.createElement('div');card.className='ai-prop';
-    var pv=preview(input);
+    var pv=input._error?{error:input._error}:preview(input);
     var beforeTxt=pv.before==null?'—':JSON.stringify(pv.before,null,2);
     var afterTxt=pv.after==null?'(removed)':JSON.stringify(pv.after,null,2);
     var html='<div class="ai-prop-top"><span class="ai-prop-tag">'+esc(input.domain)+' · '+esc(input.operation)+'</span></div>';
@@ -1044,9 +1056,11 @@
       "(dumbbells + bodyweight), and a high-protein Indian meal rotation aimed at a calorie deficit. There is a "+
       "6-day rotation: each day (1–6) has its own meals and workout.\n\n"+
       "You can change four areas: meals, training, schedule, meetings. When the user wants a change, call the "+
-      "propose_change tool with ONE concrete edit per change. The user previews a before/after and clicks Apply — "+
+      "propose_change function with ONE concrete edit per change. The user previews a before/after and clicks Apply — "+
       "nothing changes until they do. When the user only asks a question or wants advice, just reply in text. "+
       "Keep replies short and practical (a few sentences).\n\n"+
+      "In propose_change, BOTH \"locator\" and \"value\" must be passed as JSON object strings (e.g. value = "+
+      "'{\"name\":\"...\",\"pg\":\"~50 g\"}'). \"value\" only needs the fields you are changing; unspecified fields are kept.\n\n"+
       "Field notes:\n"+
       "- meals[day].meals is an array [breakfast, lunch, snack, dinner] → mealIndex 0–3. A meal item is "+
       "{when, name, pg (e.g. \"~24 g\"), items, prep}. meals[day] itself has {tag, protein} where protein is the "+
@@ -1066,97 +1080,108 @@
   }
   function buildTools(){
     return [{
-      name:'propose_change',
-      description:'Propose a single concrete edit to the user\'s plan (meals, training, schedule, or meetings). '+
-        'The user previews and approves before anything changes. Include in "value" the full fields you want to set. '+
-        'Call this whenever the user asks to change, add, or remove something.',
-      input_schema:{
-        type:'object',
-        properties:{
-          domain:{type:'string',enum:['meals','training','schedule','meetings']},
-          operation:{type:'string',enum:['update','add','delete'],description:'update edits an existing item; add/delete are mainly for meetings'},
-          locator:{type:'object',description:'Where the change applies',properties:{
-            day:{type:'integer',description:'rotation day 1–6 (meals, training)'},
-            mealIndex:{type:'integer',description:'0=breakfast,1=lunch,2=snack,3=dinner (meals)'},
-            blockIndex:{type:'integer',description:'index into the schedule array (schedule)'},
-            match:{type:'object',description:'identify a meeting to update/delete',properties:{name:{type:'string'},time:{type:'string'}}}
-          }},
-          value:{type:'object',description:'The new or edited fields for the target (see system prompt for shapes).'},
-          summary:{type:'string',description:'One concise sentence describing the change for the user.'}
-        },
-        required:['domain','operation','summary']
-      }
+      function_declarations:[{
+        name:'propose_change',
+        description:'Propose a single concrete edit to the user\'s plan (meals, training, schedule, or meetings). '+
+          'The user previews and approves before anything changes. '+
+          'Call this whenever the user asks to change, add, or remove something.',
+        parameters:{
+          type:'object',
+          properties:{
+            domain:{type:'string',enum:['meals','training','schedule','meetings']},
+            operation:{type:'string',enum:['update','add','delete'],description:'update edits an existing item; add/delete are mainly for meetings'},
+            locator:{type:'string',description:'A JSON object string identifying the target. meals item: {"day":1,"mealIndex":3}; meal day total: {"day":1}; training day: {"day":2}; schedule block: {"blockIndex":6}; meeting update/delete: {"match":{"name":"1:1","time":"15:00"}}. Use "{}" when not needed.'},
+            value:{type:'string',description:'A JSON object string with the new/edited fields for the target (only the fields you are changing). See the field shapes in the system prompt.'},
+            summary:{type:'string',description:'One concise sentence describing the change for the user.'}
+          },
+          required:['domain','operation','value','summary']
+        }
+      }]
     }];
   }
 
-  /* ---- send / call Claude ---- */
+  /* ---- send / call Gemini ---- */
   function setBusy(b){aiBusy=b;$('ai-send').disabled=b;}
   function sendMessage(){
     if(aiBusy)return;
     var input=$('ai-input');var text=input.value.trim();
     if(!text)return;
-    if(!getKey()){bubble('sys','Add your Anthropic API key in settings (⚙) to start.');$('aiSettings').classList.add('open');return;}
+    if(!getKey()){bubble('sys','Add your Google AI (Gemini) API key in settings (⚙) to start.');$('aiSettings').classList.add('open');return;}
     clearEmpty();
     input.value='';input.style.height='auto';
     bubble('user',text);
-    aiMessages.push({role:'user',content:text});
+    aiMessages.push({role:'user',parts:[{text:text}]});
     saveChat();
-    var typing=document.createElement('div');typing.className='ai-typing';typing.textContent='Claude is thinking…';
+    var typing=document.createElement('div');typing.className='ai-typing';typing.textContent='Gemini is thinking…';
     $('aiMsgs').appendChild(typing);scrollMsgs();
     setBusy(true);
-    callClaude().then(function(data){
+    callGemini().then(function(data){
       typing.remove();
-      var blocks=data.content||[];
-      blocks.forEach(function(b){
-        if(b.type==='text'&&b.text)bubble('bot',b.text);
-        else if(b.type==='tool_use')renderProposal(b.input,true);
-      });
-      aiMessages.push({role:'assistant',content:blocks});
-      var toolUses=blocks.filter(function(b){return b.type==='tool_use';});
-      if(toolUses.length){
-        aiMessages.push({role:'user',content:toolUses.map(function(b){
-          return {type:'tool_result',tool_use_id:b.id,content:'Proposal shown to the user; awaiting their approval.'};
-        })});
+      var cand=data.candidates&&data.candidates[0];
+      if(!cand||!cand.content){
+        var fr=cand&&cand.finishReason;
+        throw new Error(fr==='SAFETY'?'The model blocked that request for safety reasons.':(fr==='MAX_TOKENS'?'Response was cut off — try a shorter request.':'No response from the model.'));
       }
+      var parts=cand.content.parts||[];
+      parts.forEach(function(p){
+        if(p.text)bubble('bot',p.text);
+        else if(p.functionCall&&p.functionCall.name==='propose_change')renderProposal(normalizeArgs(p.functionCall.args),true);
+      });
+      aiMessages.push({role:'model',parts:parts});
       saveChat();
     }).catch(function(err){
       typing.remove();
       bubble('sys',err&&err.message?err.message:'Something went wrong.');
       /* roll back the unanswered user turn so history stays valid */
-      if(aiMessages.length&&aiMessages[aiMessages.length-1].role==='user'&&typeof aiMessages[aiMessages.length-1].content==='string'){
-        aiMessages.pop();saveChat();
-      }
+      var last=aiMessages[aiMessages.length-1];
+      if(last&&last.role==='user'){aiMessages.pop();saveChat();}
     }).then(function(){setBusy(false);input.focus();});
   }
-  function callClaude(){
-    return fetch('https://api.anthropic.com/v1/messages',{
+  /* turn stored history into a clean alternating user/model transcript of text only —
+     the full plan state is re-sent in the system prompt every call, so dropping the
+     dangling functionCall/Response parts keeps the request valid without losing context */
+  function toContents(){
+    var list=[];
+    aiMessages.forEach(function(m){
+      var parts=(m.parts||[]).filter(function(p){return p.text!=null&&p.text!=='';});
+      if(parts.length)list.push({role:m.role,parts:parts});
+    });
+    var out=[];
+    list.forEach(function(t){
+      if(out.length&&out[out.length-1].role===t.role)out[out.length-1].parts=out[out.length-1].parts.concat(t.parts);
+      else out.push({role:t.role,parts:t.parts.slice()});
+    });
+    return out;
+  }
+  function callGemini(){
+    var model=getModel();
+    var url='https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(model)+
+      ':generateContent?key='+encodeURIComponent(getKey());
+    return fetch(url,{
       method:'POST',
-      headers:{
-        'content-type':'application/json',
-        'x-api-key':getKey(),
-        'anthropic-version':'2023-06-01',
-        'anthropic-dangerous-direct-browser-access':'true'
-      },
+      headers:{'content-type':'application/json'},
       body:JSON.stringify({
-        model:getModel(),
-        max_tokens:2048,
-        system:buildSystemPrompt(),
+        system_instruction:{parts:[{text:buildSystemPrompt()}]},
+        contents:toContents(),
         tools:buildTools(),
-        messages:aiMessages
+        generationConfig:{maxOutputTokens:8192,temperature:0.4}
       })
     }).then(function(res){
       return res.json().catch(function(){return {};}).then(function(data){
         if(!res.ok){
+          var em=data.error&&data.error.message;
           var msg;
-          if(res.status===401)msg='That API key looks invalid — check it in settings (⚙).';
+          if(res.status===400&&/api key/i.test(em||''))msg='That API key looks invalid — check it in settings (⚙).';
+          else if(res.status===403)msg='Access denied — the key may be wrong or lacks permission.';
+          else if(res.status===404)msg='Model "'+model+'" not found — pick a different one in settings (⚙).';
           else if(res.status===429)msg='Rate limited — wait a moment and try again.';
-          else if(res.status===400&&data.error&&data.error.message)msg='Request rejected: '+data.error.message;
-          else msg='API error '+res.status+(data.error&&data.error.message?': '+data.error.message:'');
+          else if(em)msg='Request rejected: '+em;
+          else msg='API error '+res.status+'.';
           throw new Error(msg);
         }
         return data;
       });
-    },function(){throw new Error('Network error — could not reach Anthropic. Check your connection.');});
+    },function(){throw new Error('Network error — could not reach Google. Check your connection.');});
   }
 
   /* ---- reset plan ---- */

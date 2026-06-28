@@ -409,6 +409,7 @@
       <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash-Lite — cheapest</option>
       <option value="gemini-2.0-flash">Gemini 2.0 Flash — previous generation</option>
     </select>
+    <div class="ai-note" id="ai-model-status" style="margin-top:-6px"></div>
     <div class="ai-note"><b>Stays in this browser only.</b> The key is saved to this device's local
       storage and sent straight to Google. Get one free at <b>aistudio.google.com/apikey</b>. Don't
       host this file publicly with a key saved.</div>
@@ -901,11 +902,47 @@
   function getKey(){try{return localStorage.getItem(APIKEY_KEY)||'';}catch(e){return '';}}
   function getModel(){try{return localStorage.getItem(MODELKEY)||'gemini-2.5-flash';}catch(e){return 'gemini-2.5-flash';}}
 
+  /* model list — static fallback, replaced by the live list from the user's key */
+  var STATIC_MODELS=[
+    {id:'gemini-2.5-pro',label:'Gemini 2.5 Pro — most capable'},
+    {id:'gemini-2.5-flash',label:'Gemini 2.5 Flash — fast (recommended)'},
+    {id:'gemini-2.5-flash-lite',label:'Gemini 2.5 Flash-Lite — cheapest'},
+    {id:'gemini-2.0-flash',label:'Gemini 2.0 Flash — previous generation'}
+  ];
+  function populateModels(list){
+    var sel=$('ai-model');if(!sel)return;var prev=getModel();
+    sel.innerHTML='';
+    list.forEach(function(m){var o=document.createElement('option');o.value=m.id;o.textContent=m.label;o.title=m.id;sel.appendChild(o);});
+    if(prev&&!list.some(function(m){return m.id===prev;})){var o=document.createElement('option');o.value=prev;o.textContent=prev+' (saved)';sel.appendChild(o);}
+    sel.value=prev;
+  }
+  var modelsLoaded=false;
+  function loadModels(force){
+    var key=getKey(),status=$('ai-model-status');
+    if(!key){populateModels(STATIC_MODELS);if(status)status.textContent='Add a key to load every model available to you.';return;}
+    if(modelsLoaded&&!force)return;
+    if(status)status.textContent='Loading models…';
+    fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000&key='+encodeURIComponent(key))
+      .then(function(r){return r.json();})
+      .then(function(data){
+        if(!data||!data.models)throw new Error('bad');
+        var list=data.models.filter(function(m){
+          return /gemini/i.test(m.name)&&m.supportedGenerationMethods&&m.supportedGenerationMethods.indexOf('generateContent')>-1;
+        }).map(function(m){var id=m.name.replace(/^models\//,'');return {id:id,label:(m.displayName||id)+' · '+id};});
+        /* newest major version first */
+        list.sort(function(a,b){return a.id<b.id?1:(a.id>b.id?-1:0);});
+        if(!list.length)throw new Error('none');
+        populateModels(list);modelsLoaded=true;
+        if(status)status.textContent='Loaded '+list.length+' models available to your key.';
+      })
+      .catch(function(){populateModels(STATIC_MODELS);if(status)status.textContent='Couldn’t load the live list — showing defaults.';});
+  }
+
   /* ---- drawer open/close + settings ---- */
   function openDrawer(){$('aiDrawer').classList.add('open');$('aiFab').classList.add('hidden');
     if(!aiMessages.length)scrollMsgs();setTimeout(function(){$('ai-input').focus();},250);}
   function closeDrawer(){$('aiDrawer').classList.remove('open');$('aiFab').classList.remove('hidden');}
-  function toggleSettings(){$('aiSettings').classList.toggle('open');}
+  function toggleSettings(){var o=$('aiSettings').classList.toggle('open');if(o)loadModels();}
 
   /* ---- message list rendering ---- */
   function scrollMsgs(){var m=$('aiMsgs');m.scrollTop=m.scrollHeight;}
@@ -1196,9 +1233,9 @@
   function initAI(){
     /* settings */
     $('ai-key').value=getKey();
-    $('ai-model').value=getModel();
-    $('ai-key').addEventListener('change',function(){try{localStorage.setItem(APIKEY_KEY,$('ai-key').value.trim());}catch(e){}});
+    $('ai-key').addEventListener('change',function(){try{localStorage.setItem(APIKEY_KEY,$('ai-key').value.trim());}catch(e){}modelsLoaded=false;loadModels(true);});
     $('ai-model').addEventListener('change',function(){try{localStorage.setItem(MODELKEY,$('ai-model').value);}catch(e){}});
+    loadModels();
     /* drawer controls */
     $('aiFab').addEventListener('click',openDrawer);
     $('aiClose').addEventListener('click',closeDrawer);

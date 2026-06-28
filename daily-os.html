@@ -316,14 +316,14 @@
   <!-- SCHEDULE -->
   <section class="sec" id="schedule">
     <div class="sec-head"><h2>The day</h2><div class="ln"></div></div>
-    <div class="sec-sub">Live timeline. The red marker tracks the current time. Meetings you've set for today drop into their slots, and any clash with a focus block gets flagged.</div>
+    <div class="sec-sub">Live timeline. The red marker tracks the current time. Mon–Fri run the full office-hours day; Saturday drops the work blocks; Sunday is a full off day. Meetings you've set for today drop into their slots, and any clash with a focus block gets flagged.</div>
     <div class="spine" id="spine"></div>
   </section>
 
   <!-- MEETINGS -->
   <section class="sec" id="meetings">
     <div class="sec-head"><h2>Meetings</h2><div class="ln"></div></div>
-    <div class="sec-sub">Add a one-off meeting on a date, or a recurring one on chosen weekdays. Saved to this browser so they persist between visits.</div>
+    <div class="sec-sub">Add a one-off meeting on a date, or a recurring one on chosen weekdays. Office hours run Mon–Fri, so recurring meetings are weekday-only. Saved to this browser so they persist between visits.</div>
 
     <div class="form-card">
       <div class="frow">
@@ -354,7 +354,6 @@
           <div class="weekdays" id="weekdays"></div>
           <div class="quickdays">
             <button data-q="weekdays">Mon–Fri</button>
-            <button data-q="all">Every day</button>
             <button data-q="clear">Clear</button>
           </div>
         </div>
@@ -682,6 +681,16 @@
   }
 
   /* ---------------- RENDER: SPINE ---------------- */
+  /* Office hours + meetings run Mon–Fri (Days 1–5). Saturday (Day 6) keeps the life blocks
+     only — no office windows. Sunday (Day 7) is a single full off day. */
+  var OFFICE_KINDS={focus:1,work:1,flex:1};
+  function scheduleForDay(day){
+    if(day===7)return [{t:"All day",mins:0,kind:"personal",name:"Full off day",detail:""}];
+    if(day===6)return SCHEDULE.filter(function(b){return !OFFICE_KINDS[b.kind]&&!/hard stop/i.test(b.name);});
+    return SCHEDULE; /* Mon–Fri: full office-hours day */
+  }
+  var renderedSchedule=SCHEDULE,renderedIsToday=false;
+
   function renderSpine(){
     var mtgs=meetingsForToday();
     var day=MEALS[curDay];
@@ -693,16 +702,24 @@
       '__DINNER__':esc(day.meals[3].name)+' · '+day.meals[3].pg
     };
 
-    /* which block is happening right now? */
+    var sched=scheduleForDay(curDay);
+    renderedSchedule=sched;
+    /* the "now" marker only makes sense on the day you're actually living */
+    var isToday=(curDay===weekdayToDay(new Date().getDay()));
+    renderedIsToday=isToday;
+
+    /* which block is happening right now? (only on the actual current day) */
     var nowM=new Date();var nowMins=nowM.getHours()*60+nowM.getMinutes();
     var nowIdx=-1;
-    for(var ni=0;ni<SCHEDULE.length;ni++){
-      var nxt=ni+1<SCHEDULE.length?SCHEDULE[ni+1].mins:Infinity;
-      if(nowMins>=SCHEDULE[ni].mins&&nowMins<nxt){nowIdx=ni;break;}
+    if(isToday){
+      for(var ni=0;ni<sched.length;ni++){
+        var nxt=ni+1<sched.length?sched[ni+1].mins:Infinity;
+        if(nowMins>=sched[ni].mins&&nowMins<nxt){nowIdx=ni;break;}
+      }
     }
 
     var html='<div class="now-line" id="nowLine"><span class="now-tag" id="nowTag"></span></div>';
-    SCHEDULE.forEach(function(b,bi){
+    sched.forEach(function(b,bi){
       var detail=b.detail;
       if(subs[detail])detail=subs[detail];
 
@@ -713,7 +730,7 @@
       if(bi===nowIdx)html+='<span class="pill nowpill">● Now</span>';
       if(b.pill)html+='<span class="pill '+b.pill+'">'+pillLabel(b.pill)+'</span>';
       html+='</div>';
-      html+='<div class="detail">'+detail+'</div>';
+      if(detail)html+='<div class="detail">'+detail+'</div>';
 
       /* protected-block clash warning */
       if(b.protect){
@@ -761,13 +778,15 @@
   function positionNow(){
     var nl=$('nowLine'),nt=$('nowTag');
     if(!nl)return;
+    var sched=renderedSchedule||SCHEDULE;
+    if(!renderedIsToday||sched.length<2){nl.style.display='none';return;}
     var now=new Date();var mins=now.getHours()*60+now.getMinutes();
     var blocks=$('spine').querySelectorAll('.block');
-    if(mins<SCHEDULE[0].mins||mins>SCHEDULE[SCHEDULE.length-1].mins){nl.style.display='none';return;}
+    if(mins<sched[0].mins||mins>sched[sched.length-1].mins){nl.style.display='none';return;}
     /* find bracketing blocks */
     var idx=0;
-    for(var i=0;i<SCHEDULE.length-1;i++){if(mins>=SCHEDULE[i].mins&&mins<SCHEDULE[i+1].mins){idx=i;break;}}
-    var a=SCHEDULE[idx],b2=SCHEDULE[idx+1]||a;
+    for(var i=0;i<sched.length-1;i++){if(mins>=sched[i].mins&&mins<sched[i+1].mins){idx=i;break;}}
+    var a=sched[idx],b2=sched[idx+1]||a;
     var blkA=blocks[idx+1],blkB=blocks[idx+2]||blkA; /* +1 offset for now-line node at [0] */
     if(!blkA){nl.style.display='none';return;}
     var spineTop=$('spine').getBoundingClientRect().top;
@@ -852,9 +871,9 @@
   var mode='once';var selDays=[1,2,3,4,5];
   function buildWeekdays(){
     var html='';
-    ['M','T','W','T','F','S','S'].forEach(function(l,i){
-      var wd=(i+1)%7; /* Mon=1..Sun=0 */
-      html+='<button data-wd="'+wd+'" class="'+(selDays.indexOf(wd)>-1?'on':'')+'">'+l+'</button>';
+    /* meetings run Mon–Fri only — weekends are off */
+    [{l:'M',wd:1},{l:'T',wd:2},{l:'W',wd:3},{l:'T',wd:4},{l:'F',wd:5}].forEach(function(o){
+      html+='<button data-wd="'+o.wd+'" class="'+(selDays.indexOf(o.wd)>-1?'on':'')+'">'+o.l+'</button>';
     });
     $('weekdays').innerHTML=html;
     Array.prototype.forEach.call($('weekdays').querySelectorAll('button'),function(b){
@@ -880,7 +899,6 @@
     b.addEventListener('click',function(){
       var q=b.getAttribute('data-q');
       if(q==='weekdays')selDays=[1,2,3,4,5];
-      else if(q==='all')selDays=[0,1,2,3,4,5,6];
       else selDays=[];
       buildWeekdays();
     });
@@ -1150,9 +1168,12 @@
       "meals[day].protein (a separate propose_change with locator {day} and value {protein}).\n"+
       "- training[day] is {title, rest(bool), focus, sections:[{lab, ex:[{n, s?, r}]}], note}. Provide the whole "+
       "field you change (e.g. the full sections array).\n"+
-      "- schedule is an array; use the _index shown as blockIndex. A block is {t, mins, kind, name, detail, pill}.\n"+
-      "- meetings: add → value {type:\"once\"|\"recurring\", name, time(\"HH:MM\"), dur(min), date(\"YYYY-MM-DD\" for once) "+
-      "or days([0-6], 0=Sun) for recurring}. update/delete → locator.match {name, time}.\n\n"+
+      "- schedule is an array — the Mon–Fri office-hours day; use the _index shown as blockIndex. A block is "+
+      "{t, mins, kind, name, detail, pill}. The timeline shows this full schedule Mon–Fri (Days 1–5); Saturday "+
+      "(Day 6) renders it without the office blocks (kinds focus/work/flex); Sunday (Day 7) shows only a single "+
+      "\"Full off day\" block. These weekend views are derived automatically — edit the master schedule, not them.\n"+
+      "- meetings run Mon–Fri only: add → value {type:\"once\"|\"recurring\", name, time(\"HH:MM\"), dur(min), "+
+      "date(\"YYYY-MM-DD\" for once) or days([1-5], Mon=1…Fri=5) for recurring}. update/delete → locator.match {name, time}.\n\n"+
       "Currently selected rotation day: "+curDay+".\n\n"+
       "CURRENT PLAN STATE (JSON):\n"+
       "MEALS = "+JSON.stringify(MEALS)+"\n\n"+

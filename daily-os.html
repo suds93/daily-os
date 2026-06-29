@@ -90,6 +90,7 @@
   .now-line{position:absolute;left:46px;right:0;height:2px;background:var(--chilli);z-index:5;display:none}
   .now-line::before{content:"";position:absolute;left:0;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--chilli)}
   .now-line .now-tag{position:absolute;left:14px;top:-9px;font-family:'JetBrains Mono';font-size:10px;font-weight:700;color:var(--chilli);background:var(--paper);padding:0 5px}
+  .spine-cap{margin-left:-74px;margin-bottom:14px;font-family:'JetBrains Mono';font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
 
   .block{position:relative;margin-bottom:12px}
   .block .t{position:absolute;left:-74px;top:2px;width:54px;text-align:right;font-family:'JetBrains Mono';font-size:12px;font-weight:700;color:var(--muted)}
@@ -644,13 +645,24 @@
   function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
   var WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-  function meetingsForToday(){
+  /* JS weekday for a rotation day: Day 1→Mon(1) … Day 6→Sat(6), Day 7→Sun(0) */
+  function weekdayForDay(day){return day===7?0:day;}
+  /* the next calendar date (today or later) whose weekday matches the rotation day */
+  function dateForDay(day){
+    var wd=weekdayForDay(day);
+    var d=new Date();d.setHours(0,0,0,0);
+    d.setDate(d.getDate()+((wd-d.getDay()+7)%7));
+    return d;
+  }
+  function dateStr(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+
+  /* meetings landing on a given date: one-offs on that exact date + recurring on that weekday */
+  function meetingsForDate(target){
     var arr=loadMtgs();
-    var now=new Date();
-    var todayStr=now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate());
-    var wd=now.getDay();
+    var tStr=dateStr(target);
+    var wd=target.getDay();
     return arr.filter(function(m){
-      if(m.type==='once')return m.date===todayStr;
+      if(m.type==='once')return m.date===tStr;
       return m.days&&m.days.indexOf(wd)>-1;
     }).map(function(m){
       var p=m.time.split(':');var start=(+p[0])*60+(+p[1]);
@@ -692,7 +704,8 @@
   var renderedSchedule=SCHEDULE,renderedIsToday=false;
 
   function renderSpine(){
-    var mtgs=meetingsForToday();
+    var targetDate=dateForDay(curDay);
+    var mtgs=meetingsForDate(targetDate);
     var day=MEALS[curDay];
     var subs={
       '__WORKOUT__':'Today: <a href="#training">'+esc(TRAIN[curDay].title)+'</a>. '+(TRAIN[curDay].off?'Full off day — no workout. Sleep in.':(TRAIN[curDay].rest?'Recovery — no dumbbells.':'Lift before the day starts; evening sessions get skipped.')),
@@ -718,7 +731,10 @@
       }
     }
 
-    var html='<div class="now-line" id="nowLine"><span class="now-tag" id="nowTag"></span></div>';
+    var dLab=targetDate.toLocaleDateString('en',{weekday:'long',day:'numeric',month:'short'});
+    var html='<div class="spine-cap">'+(isToday?'Today · ':'Showing ')+esc(dLab)+
+             (mtgs.length?' · '+mtgs.length+' meeting'+(mtgs.length>1?'s':''):'')+'</div>';
+    html+='<div class="now-line" id="nowLine"><span class="now-tag" id="nowTag"></span></div>';
     sched.forEach(function(b,bi){
       var detail=b.detail;
       if(subs[detail])detail=subs[detail];
